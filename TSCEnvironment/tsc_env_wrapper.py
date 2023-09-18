@@ -11,7 +11,7 @@
     - （c）作出某个动作后, phase 对应排队长度的变化的预测（这里预测可以直接使用 MCT 来进行预测，或者服从某个分布，这里需要做一个预测）
     - （d）比较前后两次 phase 之间的排队的增加
     - （e）分析路口的性能（就是根据 c 的结果做进一步的计算）
-@LastEditTime: 2023-09-15 20:30:41
+@LastEditTime: 2023-09-18 17:10:46
 '''
 import gymnasium as gym
 from gymnasium.core import Env
@@ -24,8 +24,6 @@ from TSCEnvironment.wrapper_utils import (
     OccupancyList
 )
 
-
-    
     
 class TSCEnvWrapper(gym.Wrapper):
     def __init__(self, env: Env) -> None:
@@ -37,6 +35,7 @@ class TSCEnvWrapper(gym.Wrapper):
 
         # Dynamic Information
         self.state = None # 当前的 state
+        self.rescue_movement = None
         self.last_state = None # 上一时刻的 state
         self.occupancy = OccupancyList()
 
@@ -56,12 +55,22 @@ class TSCEnvWrapper(gym.Wrapper):
             output_dict[movement_id] = f"{value*100}%" # 转换为占有率
         return output_dict
 
+    def get_rescue_movement_ids(self, last_step_vehicle_id_list):
+        """获得当前 emergy vehicle 在什么车道上
+        """
+        rescue_movement_ids = []
+        for vehicle_ids, movement_id in zip(last_step_vehicle_id_list, self.movement_ids):
+            for vehicle_id in vehicle_ids:
+                if 'rescue' in vehicle_id:
+                    rescue_movement_ids.append(movement_id)
+        return rescue_movement_ids
 
     def state_wrapper(self, state):
         """从 state 中返回 occupancy
         """
         occupancy = state['last_step_occupancy']
-        return occupancy
+        last_step_vehicle_id_list = state['last_step_vehicle_id_list']
+        return occupancy, last_step_vehicle_id_list
     
 
     def reset(self) -> Tuple[Any, Dict[str, Any]]:
@@ -72,8 +81,9 @@ class TSCEnvWrapper(gym.Wrapper):
         self.llm_static_information = convert_state_to_static_information(state)
 
         # Dynamic junction information
-        occupancy = self.state_wrapper(state=state)
+        occupancy, last_step_vehicle_id_list = self.state_wrapper(state=state)
         self.state = self.transform_occ_data(occupancy)
+        self.rescue_movement = self.get_rescue_movement_ids(last_step_vehicle_id_list)
         return self.state
     
 
@@ -83,13 +93,14 @@ class TSCEnvWrapper(gym.Wrapper):
         can_perform_action = False
         while not can_perform_action:
             states, rewards, truncated, dones, infos = super().step(action) # 与环境交互
-            occupancy = self.state_wrapper(state=states) # 处理每一帧的数据
+            occupancy, last_step_vehicle_id_list = self.state_wrapper(state=states) # 处理每一帧的数据
             self.occupancy.add_element(occupancy)
             can_perform_action = states['can_perform_action']
 
         avg_occupancy = self.occupancy.calculate_average() # 计算平均的 average occupancy
         self.last_state = self.state
         self.state = self.transform_occ_data(avg_occupancy) # 计算每一个 phase 的 occupancy
+        self.rescue_movement = self.get_rescue_movement_ids(last_step_vehicle_id_list)
 
         return self.state, dones, infos
     
@@ -107,11 +118,30 @@ class TSCEnvWrapper(gym.Wrapper):
         tls_available_actions = list(range(self.phase_num))
         return tls_available_actions
     
-    def get_current_occupancy(self):
+    def get_intersection_layout(self) -> Dict[str, str|float|int]:
+        """路口的静态路网结构信息
+        """
+        return self.llm_static_information["movement_infos"]
+
+    def get_signal_phase_structure(self) -> Dict[str, List[str]]:
+        """路口的信号灯信息
+        """
+        return self.llm_static_information["phase_infos"]
+    
+    def get_current_occupancy(self) -> Dict[str, float]:
+        """获得当前时刻的路口状态
+        """
         return self.state
     
-    def get_previous_occupancy(self):
+    def get_previous_occupancy(self) -> Dict[str, float]:
+        """获得上一个时刻的路口状态
+        """
         return self.last_state
+    
+    def get_rescue_movement(self) -> List[str]:
+        """返回车道上是否有急救车
+        """
+        return self.rescue_movement
     
     def predict_future_scene(self, phase_index):
         """预测将 phase index 设置为绿灯后, 路口排队长度的变化

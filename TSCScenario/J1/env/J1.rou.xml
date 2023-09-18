@@ -36,9 +36,7 @@
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
     <vType id="background" length="7.00" maxSpeed="15.00" color="155,89,182" tau="1.0"/>
     <vType id="ego" length="7.00" maxSpeed="17.00" color="26,188,156" tau="1.0"/>
-    <vType id="rescue" vClass="emergency" guiShape="emergency" speedFactor="1.5">
-        <param key="has.bluelight.device" value="true"/>
-    </vType>
+    <vType id="rescue" guiShape="emergency" speedFactor="1.5"/>
 
     <vehicle id="E1__0__background.0" type="background" depart="3.58" departLane="random">
         <route edges="E1 E2"/>
