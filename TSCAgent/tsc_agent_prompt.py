@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-04 20:50:31
 @Description: Traffic Signal Control Agent Prompt
-@LastEditTime: 2023-09-15 17:24:46
+@LastEditTime: 2023-09-18 21:54:31
 '''
 TSC_INSTRUCTIONS = """Now suppose you are an expert in traffic signal control, your goal is to reduce congestion at the intersection. The traffic signal at this intersection has **{phase_num}** phases. In the current environment, the average queue length and maximum queue length for each phase are as follows, measured in meters:
 
@@ -29,8 +29,28 @@ Please make decision for the traffic light. Let's think step by step.
 - Based on the above analysis, calculate the congestion situation at the intersection under the two actions 
 """
 
+TRAFFIC_RULES = """
+"""
+
+DECISION_CAUTIONS = """
+1. DONOT finish the task until you have a final answer. You must output a decision when you finish this task. Your final output decision must be unique and not ambiguous. For example you cannot say "I can either keep lane or accelerate at current time".
+2. You can only use tools mentioned before to help you make decision. DONOT fabricate any other tool name not mentioned.
+3. Remember what tools you have used, DONOT use the same tool repeatedly.
+4. You need to know your available actions and junction state before you make any decision.
+"""
+
+
+SYSTEM_MESSAGE_PREFIX = """You are ChatGPT, a large language model trained by OpenAI. 
+You are now act as a mature traffic signal control assistant, who can give accurate and correct advice for human in complex traffic light control scenarios with different junctions. 
+
+TOOLS:
+------
+You have access to the following tools:
+"""
+
+
 SYSTEM_MESSAGE_SUFFIX = """
-The driving task usually invovles many steps. You can break this task down into subtasks and complete them one by one. 
+The traffic signal control task usually invovles many steps. You can break this task down into subtasks and complete them one by one. 
 There is no rush to give a final answer unless you are confident that the answer is correct.
 Answer the following questions as best you can. Begin! 
 
@@ -39,7 +59,46 @@ Take a deep breath and work on this problem step-by-step.
 Reminder you MUST use the EXACT characters `Final Answer` when responding the final answer of the original input question.
 """
 
-TSC_SUMMARY = """
-{decision_result}
-{format_instructions}
+FORMAT_INSTRUCTIONS = """The way you use the tools is by specifying a json blob.
+Specifically, this json should have a `action` key (with the name of the tool to use) and a `action_input` key (with the input to the tool going here).
+The only values that should be in the "action" field are one of: {tool_names}
+
+The $JSON_BLOB should only contain a SINGLE action, do NOT return a list of multiple actions. **Here is an example of a valid $JSON_BLOB**:
+```
+{{{{
+  "action": $TOOL_NAME,
+  "action_input": $INPUT
+}}}}
+```
+
+ALWAYS use the following format when you use tool:
+Question: the input question you must answer
+Thought: always summarize the tools you have used and think what to do next step by step
+Action:
+```
+$JSON_BLOB
+```
+Observation: the result of the action
+... (this Thought/Action/Observation can repeat N times)
+
+When you have a final answer, you MUST use the format:
+Thought: I now know the final answer, then summary why you have this answer
+Final Answer: the final answer to the original input question"""
+
+HANDLE_PARSING_ERROR = """Check your output and make sure it conforms the format instructions! The following is an example of the format instructions:
+```json
+{
+  "action": "Get Intersection Layout",
+  "action_input": "J4"
+}
+```
+
+There are following two points to NOTE:
+- Using the json format.
+- There are two keys, that is `action` and `action_input`.
+
+Please REWRITE your ACTION based on the above example.
 """
+
+
+HUMAN_MESSAGE = "{input}\n\n{agent_scratchpad}"

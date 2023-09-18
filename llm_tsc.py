@@ -20,15 +20,21 @@ import langchain
 import numpy as np
 from langchain.chat_models import ChatOpenAI
 
-from loguru import logger
-from tshub.utils.format_dict import dict_to_str
 from tshub.utils.get_abs_path import get_abs_path
 from tshub.utils.init_log import set_logger
 
 from TSCEnvironment.tsc_env import TSCEnvironment
 from TSCEnvironment.tsc_env_wrapper import TSCEnvWrapper
 from TSCAgent.tsc_agent import TSCAgent
-from TSCAgent.custom_tools import GetAvailableActions, GetCurrentOccupancy
+from TSCAgent.output_parse import OutputParse
+from TSCAgent.custom_tools import (
+    GetAvailableActions, 
+    GetCurrentOccupancy,
+    GetPreviousOccupancy,
+    GetIntersectionLayout,
+    GetSignalPhaseStructure,
+    GetEmergencyVehicle,
+)
 from utils.readConfig import read_config
 
 langchain.debug = False # 开启详细的显示
@@ -50,7 +56,7 @@ if __name__ == '__main__':
     sumo_cfg = path_convert("./TSCScenario/J1/env/J1.sumocfg")
     tsc_scenario = TSCEnvironment(
         sumo_cfg=sumo_cfg, 
-        num_seconds=1200,
+        num_seconds=300,
         tls_id='J4', 
         tls_action_type='choose_next_phase',
         use_gui=True
@@ -58,18 +64,37 @@ if __name__ == '__main__':
     tsc_wrapper = TSCEnvWrapper(tsc_scenario)
 
     # Init Agent
+    o_parse = OutputParse(env=None, llm=chat)
     tools = [
         GetAvailableActions(env=tsc_wrapper),
-        GetCurrentOccupancy(env=tsc_wrapper), # 查看当前时刻的拥堵情况
+        GetCurrentOccupancy(env=tsc_wrapper),
+        GetPreviousOccupancy(env=tsc_wrapper),
+        GetIntersectionLayout(env=tsc_wrapper),
+        GetSignalPhaseStructure(env=tsc_wrapper),
+        GetEmergencyVehicle(env=tsc_wrapper),
     ]
-    tsc_agent = TSCAgent(llm=chat, tools=tools, verbose=True)
+    tsc_agent = TSCAgent(env=tsc_wrapper, llm=chat, tools=tools, verbose=True)
 
     # Start Simulation
     dones = False
     sim_step = 0
+    phase_id = 0 # 当前动作 id
+    last_step_explanation = "" # 作出决策的原因
     states = tsc_wrapper.reset()
     while not dones:
-        action = np.random.randint(4)
-        tsc_agent.agent_run(sim_step=sim_step)
-        states, dones, infos = tsc_wrapper.step(action=action)
+        if sim_step > 105:
+            agent_response = tsc_agent.agent_run(
+                sim_step=sim_step, 
+                last_step_action=phase_id, 
+                last_step_explanation=last_step_explanation
+            )
+            agent_action = o_parse.parser_output(agent_response)
+            phase_id = agent_action['phase_id']
+            last_step_explanation = agent_action['explanation']
+        else:
+            phase_id = np.random.randint(2)
+
+        states, dones, infos = tsc_wrapper.step(action=phase_id)
         sim_step = infos['step_time']
+    
+    tsc_wrapper.close()
