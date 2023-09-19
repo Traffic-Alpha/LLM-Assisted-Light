@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-05 11:38:20
 @Description: Traffic Signal Control Scenario
-@LastEditTime: 2023-09-18 17:18:46
+@LastEditTime: 2023-09-19 16:43:17
 '''
 import numpy as np
 from loguru import logger
@@ -19,6 +19,7 @@ set_logger(path_convert('./'))
 
 if __name__ == '__main__':
     sumo_cfg = path_convert("./TSCScenario/J1/env/J1.sumocfg")
+    database_path = path_convert("./junction.db")
     tsc_scenario = TSCEnvironment(
         sumo_cfg=sumo_cfg, 
         num_seconds=300,
@@ -26,15 +27,17 @@ if __name__ == '__main__':
         tls_action_type='choose_next_phase',
         use_gui=True
     )
-    tsc_wrapper = TSCEnvWrapper(tsc_scenario)
+    tsc_wrapper = TSCEnvWrapper(
+        env=tsc_scenario, 
+        database=database_path
+    )
 
     # Simulation with environment
     dones = False
     tsc_wrapper.reset()
     while not dones:
         action = np.random.randint(4)
-        states, dones, infos = tsc_wrapper.step(action=action)
-        tls_available_actions = tsc_wrapper.get_available_actions() # 获得当前的动作
+        states, dones, infos = tsc_wrapper.step(action=action, explanation="")
         logger.info(f"SIM: {infos['step_time']} \n{dict_to_str(states)}")
 
     tsc_wrapper.close()
