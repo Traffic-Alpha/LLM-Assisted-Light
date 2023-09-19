@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-06 14:57:39
 @Description: Agent Tools
-@LastEditTime: 2023-09-18 21:33:03
+@LastEditTime: 2023-09-19 14:44:58
 '''
 from typing import Any
 from tshub.utils.format_dict import dict_to_str
@@ -53,8 +53,8 @@ class GetAvailableActions:
             
         outputPrefix += """\nNow you get all the available actions. To check which available action is more safety and efficiency, you should follow steps:
         Step 1: Check if there is an Emergency Vehicle near this junction. We hope the Emergency Vehicle can pass the intersection as soon as possible.
-        Step 2: Get **Current Occupancy** and **Previous Occupancy** for this intersection.
-        Step 3: Analyze the efficiency and safety of different available actions.
+        Step 2: Get **Previous Occupancy** and **Current Occupancy** for this intersection.
+        Step 3: Analyze the efficiency and safety (whether exists Emergency Vehicle) of different available actions.
         Remember to use the proper tools mentioned in the tool list ONCE a time. 
         NOTE: DONOT use the same tool repeatedly, for example `Get Available Actions`.
         """

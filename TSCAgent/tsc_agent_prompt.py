@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-04 20:50:31
 @Description: Traffic Signal Control Agent Prompt
-@LastEditTime: 2023-09-18 21:54:31
+@LastEditTime: 2023-09-18 21:59:17
 '''
 TSC_INSTRUCTIONS = """Now suppose you are an expert in traffic signal control, your goal is to reduce congestion at the intersection. The traffic signal at this intersection has **{phase_num}** phases. In the current environment, the average queue length and maximum queue length for each phase are as follows, measured in meters:
 
@@ -85,20 +85,7 @@ When you have a final answer, you MUST use the format:
 Thought: I now know the final answer, then summary why you have this answer
 Final Answer: the final answer to the original input question"""
 
-HANDLE_PARSING_ERROR = """Check your output and make sure it conforms the format instructions! The following is an example of the format instructions:
-```json
-{
-  "action": "Get Intersection Layout",
-  "action_input": "J4"
-}
-```
-
-There are following two points to NOTE:
-- Using the json format.
-- There are two keys, that is `action` and `action_input`.
-
-Please REWRITE your ACTION based on the above example.
-"""
+HANDLE_PARSING_ERROR = """Check your output and make sure it conforms the format instructions!"""
 
 
 HUMAN_MESSAGE = "{input}\n\n{agent_scratchpad}"

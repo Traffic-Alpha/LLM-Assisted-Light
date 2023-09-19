@@ -11,8 +11,10 @@
     - （c）作出某个动作后, phase 对应排队长度的变化的预测（这里预测可以直接使用 MCT 来进行预测，或者服从某个分布，这里需要做一个预测）
     - （d）比较前后两次 phase 之间的排队的增加
     - （e）分析路口的性能（就是根据 c 的结果做进一步的计算）
-@LastEditTime: 2023-09-18 17:10:46
+@LastEditTime: 2023-09-19 16:47:32
 '''
+import os
+import sqlite3
 import gymnasium as gym
 from gymnasium.core import Env
 from typing import Any, SupportsFloat, Tuple, Dict, List
@@ -24,20 +26,48 @@ from TSCEnvironment.wrapper_utils import (
     OccupancyList
 )
 
-    
+
 class TSCEnvWrapper(gym.Wrapper):
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: Env, database:str) -> None:
         super().__init__(env)
+        # Init database
+        self.database = database # 数据库路径
+        if os.path.exists(self.database):
+            os.remove(self.database)
+        
+        connection, cursor = self.connect_sql()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS junctionINFO(
+                junction_id TEXT,
+                frame REAL,
+                intersection_layout TEXT,
+                phase_structure TEXT,
+                emergency_vehicle TEXT,
+                current_occupancy TEXT, 
+                previous_occupancy TEXT,
+                thoughtsAndActions TEXT,
+                action INTEGER,
+                PRIMARY KEY (junction_id, frame));"""
+        )
+        connection.commit()
+        connection.close()
+            
         # Static Information
         self.movement_ids = None
         self.phase_num = None # phase 数量
         self.llm_static_information = None # Static information, (1). Intersection Geometry; (2). Signal Phases Structure
 
         # Dynamic Information
-        self.state = None # 当前的 state
+        self.state = None
+        self.last_state = None
         self.rescue_movement = None
-        self.last_state = None # 上一时刻的 state
         self.occupancy = OccupancyList()
+    
+    def connect_sql(self):
+        connection = sqlite3.connect(self.database)
+        cursor = connection.cursor()
+        return connection, cursor
 
     def transform_occ_data(self, occ:List[float]) -> Dict[str, float]:
         """将 avg_occupancy 与每一个 movement id 对应起来
@@ -56,7 +86,7 @@ class TSCEnvWrapper(gym.Wrapper):
         return output_dict
 
     def get_rescue_movement_ids(self, last_step_vehicle_id_list):
-        """获得当前 emergy vehicle 在什么车道上
+        """获得当前 Emergency Vehicle 在什么车道上
         """
         rescue_movement_ids = []
         for vehicle_ids, movement_id in zip(last_step_vehicle_id_list, self.movement_ids):
@@ -87,7 +117,7 @@ class TSCEnvWrapper(gym.Wrapper):
         return self.state
     
 
-    def step(self, action: Any) -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
+    def step(self, action: Any, explanation:str="") -> Tuple[Any, SupportsFloat, bool, bool, Dict[str, Any]]:
         """更新路口的 state
         """
         can_perform_action = False
@@ -102,12 +132,34 @@ class TSCEnvWrapper(gym.Wrapper):
         self.state = self.transform_occ_data(avg_occupancy) # 计算每一个 phase 的 occupancy
         self.rescue_movement = self.get_rescue_movement_ids(last_step_vehicle_id_list)
 
+        self.data_commit(action=action, explanation=explanation) # 更新数据库
+
         return self.state, dones, infos
     
 
     def close(self) -> None:
         return super().close()
     
+    def data_commit(self, action, explanation) -> None:
+        connection, cursor = self.connect_sql()
+        # get junction info, (1) statistic, (2) dynamic, (3) action
+        junction_id = self.env.tls_id
+        frame = self.env.tsc_env.sim_step
+        intersection_layout = self.llm_static_information["movement_infos"]
+        phase_structure = self.llm_static_information["phase_infos"]
+        emergency_vehicle = self.rescue_movement
+        current_occupancy = self.state
+        previous_occupancy = self.last_state
+        
+        cursor.execute(
+            "INSERT INTO junctionINFO VALUES (?,?,?,?,?,?,?,?,?)",
+            (junction_id, frame, 
+             str(intersection_layout), str(phase_structure),
+             str(emergency_vehicle), str(current_occupancy), str(previous_occupancy),
+             explanation, action)
+        )
+        connection.commit()
+        connection.close()
 
     # ###########################
     # Custom Tools for TSC Agent
