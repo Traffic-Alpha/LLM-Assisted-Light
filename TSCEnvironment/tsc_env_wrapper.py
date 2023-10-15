@@ -11,7 +11,7 @@
     - （c）作出某个动作后, phase 对应排队长度的变化的预测（这里预测可以直接使用 MCT 来进行预测，或者服从某个分布，这里需要做一个预测）
     - （d）比较前后两次 phase 之间的排队的增加
     - （e）分析路口的性能（就是根据 c 的结果做进一步的计算）
-@LastEditTime: 2023-10-15 18:25:42
+@LastEditTime: 2023-10-15 21:30:41
 '''
 import os
 import sqlite3
@@ -193,6 +193,31 @@ class TSCEnvWrapper(gym.Wrapper):
         """
         return self.rescue_movement
     
+    def get_movement_state(self):
+        """得到每一个 movement 是否可以正常通行
+        """
+        # TODO, hard code here, need to update tshub
+        connection = {
+            '-E2_s': ('-E2', '-E1'),
+            '-E2_l': ('-E2', 'E4'),
+            '-E4_s': ('-E4', '-E3'),
+            '-E4_l': ('-E4', '-E1'),
+            'E1_s': ('E1', 'E2'),
+            'E1_l': ('E1', '-E3'),
+            'E3_s': ('E3', 'E4'),
+            'E3_l': ('E3', 'E2'),
+        }
+
+        _sumo = self.env.tsc_env.sumo
+
+        # 查询每一个 movement 的状态
+        # 当 movement 的速度小于 5 的时候, 认为是不可通行的
+        movement_state = dict()
+        for _movement_id, (_in_edge, _out_edge) in connection.items():
+            movement_state[_movement_id] = _sumo.lane.getMaxSpeed(f'{_out_edge}_0') > 5 
+        
+        return movement_state
+    
     def get_traditional_decision(self):
         """SOTL, 传统的判断模块, 获得每一个 phase 的最大 occ
         """
@@ -209,3 +234,15 @@ class TSCEnvWrapper(gym.Wrapper):
 
         preliminary_decision = max(phase_max_occupancy, key=phase_max_occupancy.get)
         return phase_max_occupancy, preliminary_decision
+    
+
+    # #################################
+    # Custom Tools for Change Env State
+    # ##################################
+    def set_edge_speed(self, edge_id:str, speed:float=3) -> None:
+        """设置 edge 速度, 模拟道路是否发生事故等
+        + 出现事故则车速降低
+        + 前一个路口排队溢出, 进入的车辆车速较低
+        """
+        _sumo = self.env.tsc_env.sumo
+        _sumo.edge.setMaxSpeed(edge_id, speed)

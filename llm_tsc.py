@@ -33,7 +33,9 @@ from TSCAgent.custom_tools import (
     GetPreviousOccupancy,
     GetIntersectionLayout,
     GetSignalPhaseStructure,
+    GetTraditionalDecision,
     GetEmergencyVehicle,
+    GetJunctionSituation
 )
 from utils.readConfig import read_config
 
@@ -47,13 +49,15 @@ if __name__ == '__main__':
     openai_proxy = config['OPENAI_PROXY']
     openai_api_key = config['OPENAI_API_KEY']
     chat = ChatOpenAI(
-        model='gpt-3.5-turbo-16k', temperature=0.0,
+        model=config['OPENAI_API_MODEL'], 
+        temperature=0.0,
         openai_api_key=openai_api_key, 
         openai_proxy=openai_proxy
     )
 
     # Init scenario
     sumo_cfg = path_convert("./TSCScenario/J1/env/J1.sumocfg")
+    database_path = path_convert("./junction.db")
     tsc_scenario = TSCEnvironment(
         sumo_cfg=sumo_cfg, 
         num_seconds=300,
@@ -61,17 +65,21 @@ if __name__ == '__main__':
         tls_action_type='choose_next_phase',
         use_gui=True
     )
-    tsc_wrapper = TSCEnvWrapper(tsc_scenario)
+    tsc_wrapper = TSCEnvWrapper(
+        env=tsc_scenario, 
+        database=database_path
+    )
 
     # Init Agent
     o_parse = OutputParse(env=None, llm=chat)
     tools = [
-        GetAvailableActions(env=tsc_wrapper),
-        GetCurrentOccupancy(env=tsc_wrapper),
-        GetPreviousOccupancy(env=tsc_wrapper),
         GetIntersectionLayout(env=tsc_wrapper),
         GetSignalPhaseStructure(env=tsc_wrapper),
-        GetEmergencyVehicle(env=tsc_wrapper),
+        GetCurrentOccupancy(env=tsc_wrapper),
+        GetPreviousOccupancy(env=tsc_wrapper),
+        GetTraditionalDecision(env=tsc_wrapper),
+        GetAvailableActions(env=tsc_wrapper),
+        GetJunctionSituation(env=tsc_wrapper),
     ]
     tsc_agent = TSCAgent(env=tsc_wrapper, llm=chat, tools=tools, verbose=True)
 
@@ -82,19 +90,20 @@ if __name__ == '__main__':
     last_step_explanation = "" # 作出决策的原因
     states = tsc_wrapper.reset()
     while not dones:
-        if sim_step > 105:
+        if sim_step > 120:
             agent_response = tsc_agent.agent_run(
                 sim_step=sim_step, 
-                last_step_action=phase_id, 
-                last_step_explanation=last_step_explanation
+                last_step_action=phase_id, # 上一步的动作
+                last_step_explanation=last_step_explanation # 上一步的解释
             )
             agent_action = o_parse.parser_output(agent_response)
             phase_id = agent_action['phase_id']
             last_step_explanation = agent_action['explanation']
         else:
             phase_id = np.random.randint(2)
+            last_step_explanation = ""
 
-        states, dones, infos = tsc_wrapper.step(action=phase_id)
+        states, dones, infos = tsc_wrapper.step(action=phase_id, explanation=last_step_explanation)
         sim_step = infos['step_time']
     
     tsc_wrapper.close()

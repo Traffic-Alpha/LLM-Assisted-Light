@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-05 11:38:20
 @Description: Traffic Signal Control Scenario
-@LastEditTime: 2023-10-15 18:03:29
+@LastEditTime: 2023-10-15 20:54:44
 '''
 import numpy as np
 from loguru import logger
@@ -35,10 +35,15 @@ if __name__ == '__main__':
     # Simulation with environment
     dones = False
     tsc_wrapper.reset()
+    tsc_wrapper.set_edge_speed(edge_id='E2', speed=1)
     while not dones:
         action = np.random.randint(4)
         states, dones, infos = tsc_wrapper.step(action=action, explanation="")
         traditional_decision = tsc_wrapper.get_traditional_decision() # 获得传统方法的结果
+        tsc_wrapper.get_movement_state() # 获得当前的 movement 是否是可以通行的
         logger.info(f"SIM: {infos['step_time']} \n{dict_to_str(states)}")
+
+        if infos['step_time'] > 200:
+            tsc_wrapper.set_edge_speed(edge_id='E2', speed=15)
 
     tsc_wrapper.close()
