@@ -11,7 +11,7 @@
     - （c）作出某个动作后, phase 对应排队长度的变化的预测（这里预测可以直接使用 MCT 来进行预测，或者服从某个分布，这里需要做一个预测）
     - （d）比较前后两次 phase 之间的排队的增加
     - （e）分析路口的性能（就是根据 c 的结果做进一步的计算）
-@LastEditTime: 2023-09-19 16:47:32
+@LastEditTime: 2023-10-15 18:25:42
 '''
 import os
 import sqlite3
@@ -101,7 +101,6 @@ class TSCEnvWrapper(gym.Wrapper):
         occupancy = state['last_step_occupancy']
         last_step_vehicle_id_list = state['last_step_vehicle_id_list']
         return occupancy, last_step_vehicle_id_list
-    
 
     def reset(self) -> Tuple[Any, Dict[str, Any]]:
         state =  self.env.reset()
@@ -136,7 +135,6 @@ class TSCEnvWrapper(gym.Wrapper):
 
         return self.state, dones, infos
     
-
     def close(self) -> None:
         return super().close()
     
@@ -195,20 +193,19 @@ class TSCEnvWrapper(gym.Wrapper):
         """
         return self.rescue_movement
     
-    def predict_future_scene(self, phase_index):
-        """预测将 phase index 设置为绿灯后, 路口排队长度的变化
+    def get_traditional_decision(self):
+        """SOTL, 传统的判断模块, 获得每一个 phase 的最大 occ
         """
-        try:
-            phase_index = int(phase_index)
-        except:
-            raise ValueError(f"phase_index need to be a number, rather than {phase_index}.")
-        predict_state = create_nested_defaultdict()
-        for _tls_id, _tls_info in self.state.items():
-            _tls_phase_queue_info = _tls_info['phase_queue_lengths']
-            for _phase_index, (_phase_name, _queue_info) in enumerate(_tls_phase_queue_info.items()):
-                if _phase_index == phase_index: # green light
-                    _p_state = predict_queue_length(_queue_info, is_green=True)
-                else: # red light
-                    _p_state = predict_queue_length(_queue_info, is_green=False)
-                predict_state[_tls_id][_phase_name] = _p_state
-        return defaultdict2dict(predict_state)
+        # Parse the percentages in the state dictionary
+        state = {k: float(v.strip('%')) for k, v in self.state.items()}
+
+        phase_max_occupancy = {}
+
+        phaseInfo = self.llm_static_information["phase_infos"]
+        # Iterate over each phase
+        for phase, info in phaseInfo.items():
+            # Find the max occupancy for the movements in this phase
+            phase_max_occupancy[phase] = max(state[movement] for movement in info['movements'])
+
+        preliminary_decision = max(phase_max_occupancy, key=phase_max_occupancy.get)
+        return phase_max_occupancy, preliminary_decision

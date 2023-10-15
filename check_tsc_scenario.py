@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-05 11:38:20
 @Description: Traffic Signal Control Scenario
-@LastEditTime: 2023-09-19 16:43:17
+@LastEditTime: 2023-10-15 18:03:29
 '''
 import numpy as np
 from loguru import logger
@@ -38,6 +38,7 @@ if __name__ == '__main__':
     while not dones:
         action = np.random.randint(4)
         states, dones, infos = tsc_wrapper.step(action=action, explanation="")
+        traditional_decision = tsc_wrapper.get_traditional_decision() # 获得传统方法的结果
         logger.info(f"SIM: {infos['step_time']} \n{dict_to_str(states)}")
 
     tsc_wrapper.close()
