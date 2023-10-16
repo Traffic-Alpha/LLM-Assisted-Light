@@ -90,20 +90,31 @@ if __name__ == '__main__':
     last_step_explanation = "" # 作出决策的原因
     states = tsc_wrapper.reset()
     while not dones:
-        if sim_step > 120:
+        if (sim_step > 120) and (sim_step < 156):
+            if (sim_step > 130) and (sim_step < 145):
+                tsc_wrapper.set_edge_speed(edge_id='E2', speed=3)
+            else:
+                tsc_wrapper.set_edge_speed(edge_id='E2', speed=13)
+
             agent_response = tsc_agent.agent_run(
                 sim_step=sim_step, 
                 last_step_action=phase_id, # 上一步的动作
                 last_step_explanation=last_step_explanation # 上一步的解释
             )
+            print(f'Parser Output, {agent_response}')
             agent_action = o_parse.parser_output(agent_response)
             phase_id = agent_action['phase_id']
             last_step_explanation = agent_action['explanation']
-        else:
+        elif sim_step < 120:
             phase_id = np.random.randint(2)
+            last_step_explanation = ""
+        else:
+            phase_max_occupancy, preliminary_decision = tsc_wrapper.get_traditional_decision()
+            phase_id = int(preliminary_decision.split()[-1])
             last_step_explanation = ""
 
         states, dones, infos = tsc_wrapper.step(action=phase_id, explanation=last_step_explanation)
         sim_step = infos['step_time']
+        print(f'---\nSim Time, {sim_step}\n---')
     
     tsc_wrapper.close()
