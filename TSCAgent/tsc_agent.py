@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-04 20:51:49
 @Description: traffic light control LLM Agent
-@LastEditTime: 2023-09-18 21:56:40
+@LastEditTime: 2023-10-16 00:01:59
 '''
 from typing import List
 from loguru import logger
@@ -10,7 +10,7 @@ from loguru import logger
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.agents.tools import Tool
-from langchain.memory import ConversationSummaryBufferMemory
+from langchain.memory import ConversationSummaryMemory
 from tshub.utils.get_abs_path import get_abs_path
 from TSCAgent.callback_handler import create_file_callback
 
@@ -45,8 +45,8 @@ class TSCAgent:
                 Tool(name=func.name, description=func.description, func=func)
             )
         
-        self.memory = ConversationSummaryBufferMemory(
-            llm=self.llm, max_token_limit=20000
+        self.memory = ConversationSummaryMemory(
+            llm=self.llm,
         )
         self.agent = initialize_agent(
             tools=self.tools, # 这里是所有可以使用的工具
@@ -58,10 +58,10 @@ class TSCAgent:
                 'system_message_prefix': SYSTEM_MESSAGE_PREFIX,
                 'syetem_message_suffix': SYSTEM_MESSAGE_SUFFIX,
                 'human_message': HUMAN_MESSAGE,
-                'format_instructions': FORMAT_INSTRUCTIONS,
+                # 'format_instructions': FORMAT_INSTRUCTIONS,
             },
             handle_parsing_errors=HANDLE_PARSING_ERROR,
-            max_iterations=30,
+            max_iterations=8,
             early_stopping_method="generate",
         )
     
@@ -69,12 +69,13 @@ class TSCAgent:
         """Agent Run
         """
         logger.info(f"SIM: Decision at step {sim_step} is running:")
+        # 找出接近的场景, 动作和解释
         llm_response = self.agent.run(
             f"""
             You, the 'traffic signal light', are now controlling the traffic signal in the junction with ID `{self.env.env.tls_id}`. You have already control for {sim_step} seconds.
             The decision you made LAST time step was `{last_step_action}`. Your explanation was `{last_step_explanation}`. 
-            Please make decision for the traffic signal light. You have to describe the **Static State** of the `traffic light`, including **Intersection Layout** and **Signal Phase Structure**. Then you need to analyze the possible actions and get the occupancy of the intersection, and finally output your decision. 
-
+            Please make decision for the traffic signal light. You have to describe the **Static State** and **Dynamic State** of the `traffic light`, including **Intersection Layout**, **Signal Phase Structure** and **Current Occupancy**. Then you need to determine whether the environment is a long-tail problem. If it's not a long-tail problem, you can refer to the Traditional Decision and provide an explanation based on the scene you observed. If it's a long-tail scenario, you need to analyze the possible actions and make a judgment on your own, and finally output your decision. 
+            
             There are several rules you need to follow when you control the traffic lights:
             {TRAFFIC_RULES}
 

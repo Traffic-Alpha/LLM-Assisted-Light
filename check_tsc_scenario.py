@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-05 11:38:20
 @Description: Traffic Signal Control Scenario
-@LastEditTime: 2023-10-15 20:54:44
+@LastEditTime: 2023-10-15 23:48:25
 '''
 import numpy as np
 from loguru import logger
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     while not dones:
         action = np.random.randint(4)
         states, dones, infos = tsc_wrapper.step(action=action, explanation="")
-        traditional_decision = tsc_wrapper.get_traditional_decision() # 获得传统方法的结果
+        phase_max_occupancy, preliminary_decision = tsc_wrapper.get_traditional_decision() # 获得传统方法的结果
         tsc_wrapper.get_movement_state() # 获得当前的 movement 是否是可以通行的
         logger.info(f"SIM: {infos['step_time']} \n{dict_to_str(states)}")
 

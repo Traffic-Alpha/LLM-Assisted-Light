@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-18 17:52:04
 @Description: Output parse
-@LastEditTime: 2023-09-18 21:07:32
+@LastEditTime: 2023-10-15 23:54:16
 '''
 from langchain.output_parsers import ResponseSchema
 from langchain.output_parsers import StructuredOutputParser
@@ -36,7 +36,6 @@ class OutputParse(object):
             answer = final_results,
         )
         output = self.llm(custom_message)
-        print(output)
         self.final_parsered_output = self.output_parser.parse(output.content)
         
         return self.final_parsered_output
