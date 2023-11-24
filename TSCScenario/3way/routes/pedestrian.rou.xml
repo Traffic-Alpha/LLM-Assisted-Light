@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2023-11-24 22:23:20 by Eclipse SUMO duarouter Version 1.18.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/wmn/TrafficAlpha/TSC-LLM/TSCScenario/3way/./env/3way.net.xml"/>
+        <route-files value="/home/wmn/TrafficAlpha/TSC-LLM/TSCScenario/3way/./_pedestrian.trip.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/wmn/TrafficAlpha/TSC-LLM/TSCScenario/3way/./routes/pedestrian.rou.xml"/>
+    </output>
+
+    <processing>
+        <randomize-flows value="true"/>
+        <persontrip.walkfactor value="0.5"/>
+    </processing>
+
+    <report>
+        <no-warnings value="true"/>
+    </report>
+
+    <random_number>
+        <seed value="777"/>
+    </random_number>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <person id="-E1__-E0_1.49" depart="60.84">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.48" depart="63.58">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.47" depart="64.16">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.46" depart="65.68">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.45" depart="65.99">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.44" depart="66.54">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.43" depart="66.80">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.42" depart="67.71">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.41" depart="67.95">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.40" depart="70.82">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.39" depart="70.88">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.38" depart="71.03">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.37" depart="72.32">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.36" depart="75.68">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.35" depart="75.93">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.34" depart="76.75">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.33" depart="77.37">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.32" depart="79.28">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.31" depart="80.32">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.30" depart="83.35">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.29" depart="85.22">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.28" depart="85.90">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.27" depart="86.23">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.26" depart="86.40">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.25" depart="86.70">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.24" depart="86.95">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.23" depart="88.29">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.22" depart="88.79">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.21" depart="90.89">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.20" depart="91.08">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.19" depart="93.66">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.18" depart="95.91">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.17" depart="96.79">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.16" depart="99.15">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.15" depart="100.54">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.14" depart="100.85">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.13" depart="101.30">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.12" depart="103.19">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.11" depart="104.46">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.9" depart="106.02">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.10" depart="106.02">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.8" depart="107.92">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.7" depart="108.14">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.6" depart="108.23">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.5" depart="111.52">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.4" depart="112.13">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.3" depart="113.45">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.2" depart="114.94">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.1" depart="116.15">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_1.0" depart="119.78">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.49" depart="120.03">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.48" depart="120.09">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.47" depart="120.19">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.46" depart="121.54">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.45" depart="121.72">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.44" depart="123.43">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.43" depart="123.47">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.42" depart="124.54">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.41" depart="124.84">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.40" depart="129.31">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.39" depart="130.17">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.38" depart="131.26">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.37" depart="132.29">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.36" depart="132.41">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.35" depart="133.67">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.34" depart="134.01">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.33" depart="135.08">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.32" depart="135.59">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.31" depart="136.46">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.30" depart="136.73">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.29" depart="138.84">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.28" depart="140.50">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.27" depart="143.16">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.26" depart="145.80">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.25" depart="145.86">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.24" depart="147.35">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.23" depart="149.83">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.22" depart="151.85">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.21" depart="155.70">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.20" depart="157.85">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.19" depart="159.52">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.18" depart="162.11">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.17" depart="162.53">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.16" depart="162.87">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.15" depart="163.28">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.14" depart="163.32">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.13" depart="163.99">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.12" depart="164.98">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.11" depart="165.08">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.10" depart="165.90">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.9" depart="167.92">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.8" depart="169.14">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.7" depart="170.44">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.6" depart="170.49">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.5" depart="171.42">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.4" depart="172.24">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.3" depart="173.47">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.2" depart="174.52">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.1" depart="177.89">
+        <walk edges="-E1 -E0"/>
+    </person>
+    <person id="-E1__-E0_2.0" depart="178.72">
+        <walk edges="-E1 -E0"/>
+    </person>
+</routes>
