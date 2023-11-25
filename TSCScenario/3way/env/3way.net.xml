@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2023-11-24 22:22:31 by Eclipse SUMO netedit Version 1.18.0
+<!-- generated on 2023-11-25 15:36:25 by Eclipse SUMO netedit Version 1.18.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
-        <sumo-net-file value="3way.net.xml"/>
+        <sumo-net-file value="/home/wmn/TrafficAlpha/TSC-LLM/TSCRL/../TSCScenario/3way/env/3way.net.xml"/>
     </input>
 
     <output>
-        <output-file value="3way.net.xml"/>
+        <output-file value="/home/wmn/TrafficAlpha/TSC-LLM/TSCRL/../TSCScenario/3way/env/3way.net.xml"/>
     </output>
 
     <processing>
@@ -136,17 +136,12 @@
     </edge>
 
     <tlLogic id="J1" type="static" programID="0" offset="0">
-        <phase duration="10" state="gGGrrrrrrrrG"/>
-        <phase duration="10" state="gGGrrrrrrrrr"/>
-        <phase duration="3"  state="yyyrrrrrrrrr"/>
-        <phase duration="10" state="rrrGGgrrrrrG"/>
-        <phase duration="10" state="rrrGGgrrrrrr"/>
+        <phase duration="20" state="gGGrrrrrrrrG"/>
+        <phase duration="3"  state="yyyrrrrrrrry"/>
+        <phase duration="20" state="rrrGGGrrrrrr"/>
         <phase duration="3"  state="rrryyyrrrrrr"/>
-        <phase duration="5"  state="rrrrrrgggGGr"/>
-        <phase duration="5"  state="rrrrrrgggrrr"/>
-        <phase duration="5"  state="rrrrrrgggGGr"/>
-        <phase duration="5"  state="rrrrrrgggrrr"/>
-        <phase duration="3"  state="rrrrrryyyrrr"/>
+        <phase duration="20" state="rrrrrrGGGGGr"/>
+        <phase duration="3"  state="rrrrrryyyyyr"/>
     </tlLogic>
 
     <junction id="J0" type="dead_end" x="-155.77" y="78.72" incLanes="-E0_0 -E0_1 -E0_2" intLanes="" shape="-155.77,78.72 -155.77,87.12 -155.77,78.72"/>
