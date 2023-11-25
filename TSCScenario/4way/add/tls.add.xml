@@ -1,0 +1,6 @@
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <timedEvent type="SaveTLSStates" source="J1" dest="SaveTLSStates_J1.out.xml"/>
+    <timedEvent type="SaveTLSProgram" source="J1" dest="SaveTLSProgram_J1.out.xml"/>
+    <timedEvent type="SaveTLSSwitchStates" source="J1" dest="SaveTLSSwitchStates_J1.out.xml"/>
+    <timedEvent type="SaveTLSSwitchTimes" source="J1" dest="SaveTLSSwitchTimes_J1.out.xml"/>
+</additional>

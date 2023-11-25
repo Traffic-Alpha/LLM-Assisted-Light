@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+   <input>
+      <net-file value="4way.net.xml"/>
+      <route-files value="../routes/vehicle.rou.xml, ../routes/pedestrian.rou.xml"/>
+      <additional-files value="../add/tls.add.xml, ../add/e2.add.xml"/>
+   </input>
+</configuration>
