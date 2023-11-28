@@ -2,10 +2,16 @@
 @Author: WANG Maonan
 @Date: 2023-09-08 15:48:26
 @Description: PPO-based TSC control
+@ Choose Next Phase
 + State Design: Last step occupancy for each movement
 + Action Design: Choose Next Phase 
 + Reward Design: Total Waiting Time
-@LastEditTime: 2023-11-25 18:32:22
+
+@ Next or Not
++ State Design: Last step occupancy for each movement + green phase id
++ Action Design: Next or Not
++ Reward Design: Total Waiting Time
+@LastEditTime: 2023-11-28 14:04:07
 '''
 import os
 import torch
@@ -14,8 +20,8 @@ from tshub.utils.get_abs_path import get_abs_path
 from tshub.utils.init_log import set_logger
 
 from rl_utils.make_tsc_env import make_env
+from TSCRL.rl_utils.custom_model import CustomTSCModel
 from rl_utils.sb3_utils import VecNormalizeCallback, linear_schedule
-from benchmark.traffic_light.single_agent.utils.custom_models import CustomModel
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
@@ -26,7 +32,9 @@ logger.remove()
 set_logger(path_convert('./'), log_level="INFO")
 
 if __name__ == '__main__':
-    env_name = '4way'
+    env_name = '3way'
+    tls_action_type = 'choose_next_phase' # next_or_not, choose_next_phase
+    phase_num = 2 if tls_action_type=='next_or_not' else 3
     log_path = path_convert(f'./{env_name}/log/')
     model_path = path_convert(f'./{env_name}/models/')
     tensorboard_path = path_convert(f'./{env_name}/tensorboard/')
@@ -45,7 +53,8 @@ if __name__ == '__main__':
     params = {
         'tls_id':'J1',
         'num_seconds':500,
-        'phase_num':4,
+        'tls_action_type': tls_action_type,
+        'phase_num':phase_num, # 用于初始化 action space
         'sumo_cfg':sumo_cfg,
         'net_file':net_file,
         'use_gui':False,
@@ -72,7 +81,7 @@ if __name__ == '__main__':
     # #########
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     policy_kwargs = dict(
-        features_extractor_class=CustomModel,
+        features_extractor_class=CustomTSCModel,
         features_extractor_kwargs=dict(features_dim=16),
     )
     model = PPO(
