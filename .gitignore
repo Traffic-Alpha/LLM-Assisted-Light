@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.db
 
+# config
+utils/config.yaml
+
 # C extensions
 *.so
 
