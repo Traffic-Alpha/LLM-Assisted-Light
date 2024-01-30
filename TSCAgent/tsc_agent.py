@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-04 20:51:49
 @Description: traffic light control LLM Agent
-@LastEditTime: 2023-10-16 00:01:59
+@LastEditTime: 2024-01-06 17:02:26
 '''
 from typing import List
 from loguru import logger
@@ -13,15 +13,14 @@ from langchain.agents.tools import Tool
 from langchain.memory import ConversationSummaryMemory
 from tshub.utils.get_abs_path import get_abs_path
 from TSCAgent.callback_handler import create_file_callback
+from langchain.prompts import ChatPromptTemplate
 
-from TSCAgent.tsc_agent_prompt import (
-    SYSTEM_MESSAGE_SUFFIX,
+from TSCPrompt.llm_rl_prompt import (
     SYSTEM_MESSAGE_PREFIX,
+    SYSTEM_MESSAGE_SUFFIX,
     HUMAN_MESSAGE,
-    FORMAT_INSTRUCTIONS,
-    TRAFFIC_RULES,
-    DECISION_CAUTIONS,
-    HANDLE_PARSING_ERROR
+    HANDLE_PARSING_ERROR,
+    AGENT_MESSAGE
 )
 
 class TSCAgent:
@@ -69,26 +68,15 @@ class TSCAgent:
         """Agent Run
         """
         logger.info(f"SIM: Decision at step {sim_step} is running:")
+        prompt_templete = ChatPromptTemplate.from_template(AGENT_MESSAGE)
+        custom_message = prompt_templete.format_messages(
+            sim_step=sim_step,
+            last_step_action=last_step_action,
+            last_step_explanation=last_step_explanation
+        )
         # 找出接近的场景, 动作和解释
         llm_response = self.agent.run(
-            f"""
-            You, the 'traffic signal light', are now controlling the traffic signal in the junction with ID `{self.env.env.tls_id}`. You have already control for {sim_step} seconds.
-            The decision you made LAST time step was `{last_step_action}`. Your explanation was `{last_step_explanation}`. 
-            Please make decision for the traffic signal light. You have to describe the **Static State** and **Dynamic State** of the `traffic light`, including **Intersection Layout**, **Signal Phase Structure** and **Current Occupancy**. Then you need to determine whether the environment is a long-tail problem. If it's not a long-tail problem, you can refer to the Traditional Decision and provide an explanation based on the scene you observed. If it's a long-tail scenario, you need to analyze the possible actions and make a judgment on your own, and finally output your decision. 
-            
-            There are several rules you need to follow when you control the traffic lights:
-            {TRAFFIC_RULES}
-
-            Here are your attentions points:
-            {DECISION_CAUTIONS}
-            
-            Let's take a deep breath and think step by step. Once you made a final decision, output it in the following format: \n
-            ```
-            Final Answer: 
-                "decision":{{"traffic signal light decision, ONE of the available actions"}},
-                "expalanations":{{"your explaination about your decision, described your suggestions to the Crossing Guard"}}
-            ``` \n
-            """,
+            custom_message,
             callbacks=[self.file_callback]
         )
         self.memory.clear()

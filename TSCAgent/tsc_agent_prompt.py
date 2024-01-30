@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-04 20:50:31
 @Description: Traffic Signal Control Agent Prompt
-@LastEditTime: 2023-10-16 00:28:25
+@LastEditTime: 2024-01-06 16:44:03
 '''
 TSC_INSTRUCTIONS = """Now suppose you are an expert in traffic signal control, your goal is to reduce congestion at the intersection. The traffic signal at this intersection has **{phase_num}** phases. In the current environment, the average queue length and maximum queue length for each phase are as follows, measured in meters:
 
@@ -47,7 +47,7 @@ DECISION_CAUTIONS = """
 
 
 SYSTEM_MESSAGE_PREFIX = """You are ChatGPT, a large language model trained by OpenAI. 
-You are now act as a mature traffic signal control assistant, who can give accurate and correct advice for human in complex traffic light control scenarios with different junctions. 
+You are now act as a mature traffic signal control assistant, who can give accurate and correct advice for human in complex traffic light control scenarios with different cases. 
 
 TOOLS:
 ------
