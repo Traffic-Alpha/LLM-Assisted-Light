@@ -1,7 +1,7 @@
 '''
 @Author: WANG Maonan
 @Date: 2023-09-05 11:27:05
-@Description: 处理 Traffic Signal Control Env 的 State
+@Description: 处理 Traffic Signal Control Env 的 State (之前论文的环境)
 1. 处理路口的信息
     - 路口的静态信息, 道路拓扑信息 (这个是用于相似度的比较)
     - 道路的动态信息, 会随着时间进行变化（每个 phase 的排队长度和当前所在的 phase）
@@ -11,7 +11,7 @@
     - （c）作出某个动作后, phase 对应排队长度的变化的预测（这里预测可以直接使用 MCT 来进行预测，或者服从某个分布，这里需要做一个预测）
     - （d）比较前后两次 phase 之间的排队的增加
     - （e）分析路口的性能（就是根据 c 的结果做进一步的计算）
-@LastEditTime: 2023-10-15 21:30:41
+@LastEditTime: 2024-01-06 15:56:59
 '''
 import os
 import sqlite3

@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
-   <input>
-      <net-file value="J1.net.xml"/>
-      <route-files value="J1.rou.xml"/>
-      <additional-files value="../add/tls.add.xml, ../add/e2.add.xml"/>
-   </input>
-</configuration>

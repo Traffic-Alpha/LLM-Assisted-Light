@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-05 15:26:11
 @Description: 处理 State 的特征
-@LastEditTime: 2023-09-15 20:15:02
+@LastEditTime: 2023-12-02 17:35:36
 '''
 import numpy as np
 from typing import List, Dict, Any
@@ -32,9 +32,11 @@ class OccupancyList:
         self.clear_elements() # 清空列表
         return averages
 
-
-
-
+def find_index(lst, element):
+    try:
+        return lst.index(element)
+    except ValueError:
+        return None
 
 
 def calculate_queue_lengths(movement_ids:List[str], jam_length_meters:List[float], phase2movements:Dict[str, List[str]]) -> Dict[str, Dict[str, float]]:
@@ -172,10 +174,10 @@ def convert_state_to_static_information(input_data) -> Dict[str, Dict[str, Any]]
             },
             "phase_infos": {
                 "phase 0": {
-                    "movements": ["E2_s", "E1_s"]
+                    "movements": ["E2--s", "E1--s"]
                 },
                 "phase 1": {
-                    "movements": ["E1_l", "E2_l"]
+                    "movements": ["E1--l", "E2--l"]
                 },
                 ...
             }
@@ -206,7 +208,7 @@ def convert_state_to_static_information(input_data) -> Dict[str, Dict[str, Any]]
     for phase, movements in input_data["phase2movements"].items():
         phase_key = f"Phase {phase}"
         output_data["phase_infos"][phase_key] = {
-            "movements": ["_".join(_movement.split('--')) for _movement in movements]
+            "movements": movements
         }
 
     return output_data
