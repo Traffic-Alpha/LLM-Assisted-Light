@@ -1,7 +1,10 @@
 '''
 @Author: WANG Maonan
 @Date: 2023-09-04 20:46:09
-@Description: 基于 LLM 的 Traffic Light Control
+@Description: 基于 LLM-ReAct 的 Traffic Light Control
+
+
+
 1. 会有数据库, 我们会搜索最相似的场景 (如何定义场景的相似程度), 然后可以存储在 memory 里面, 或者放在 query 里面
 2. 不同的 action 检查
     - getAvailableActions, 获得当前所有的动作
@@ -48,11 +51,13 @@ if __name__ == '__main__':
     config = read_config()
     openai_proxy = config['OPENAI_PROXY']
     openai_api_key = config['OPENAI_API_KEY']
+    openai_api_base = config['OPENAI_API_BASE']
     chat = ChatOpenAI(
         model=config['OPENAI_API_MODEL'], 
         temperature=0.0,
         openai_api_key=openai_api_key, 
-        openai_proxy=openai_proxy
+        openai_proxy=openai_proxy,
+        openai_api_base=openai_api_base,
     )
 
     # Init scenario
@@ -90,8 +95,8 @@ if __name__ == '__main__':
     last_step_explanation = "" # 作出决策的原因
     states = tsc_wrapper.reset()
     while not dones:
-        if (sim_step > 120) and (sim_step < 156):
-            if (sim_step > 130) and (sim_step < 145):
+        if (sim_step > 120) and (sim_step < 160):
+            if (sim_step > 140) and (sim_step < 150):
                 tsc_wrapper.set_edge_speed(edge_id='E2', speed=3)
             else:
                 tsc_wrapper.set_edge_speed(edge_id='E2', speed=13)

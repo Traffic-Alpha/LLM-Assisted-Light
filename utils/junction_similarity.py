@@ -4,10 +4,22 @@
 @Description: 计算两个路口的相似度
 + 1. 计算静态相似度 (欧式距离)
 + 2. 计算动态相似度 (余弦相似度)
-@LastEditTime: 2023-09-19 19:57:53
+@LastEditTime: 2023-09-19 20:35:27
 '''
 from typing import Tuple, Dict, List, Any, Literal
 from utils.euclidean_distance import euclidean_distance
+
+def find_min_indices(lst, n):
+    # 使用enumerate函数获取每个元素的索引和值
+    indices_and_values = list(enumerate(lst))
+    
+    # 根据值进行排序
+    sorted_indices_and_values = sorted(indices_and_values, key=lambda x: x[1])
+    
+    # 获取最小的n个值的索引
+    min_indices = [index for index, _ in sorted_indices_and_values[:n]]
+    
+    return min_indices
 
 def get_int_info(raw_int) -> Tuple[Any,Any,Any,Any,Any,Any]:
     intersection_layout = eval(raw_int[2])
