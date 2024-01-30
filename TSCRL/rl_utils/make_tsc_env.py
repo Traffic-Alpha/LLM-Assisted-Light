@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-08 17:45:54
 @Description: 创建 TSC Env + Wrapper
-@LastEditTime: 2023-11-25 20:39:28
+@LastEditTime: 2023-12-02 11:47:12
 '''
 import sys
 from pathlib import Path
@@ -17,7 +17,7 @@ from typing import List
 from stable_baselines3.common.monitor import Monitor
 
 from TSCEnvironment.tsc_env import TSCEnvironment
-from TSCEnvironment.rl_tsc_wrapper import RLTSCEnvWrapper
+from TSCEnvironment.base_tsc_wrapper import BaseTSCEnvWrapper
 
 def make_env(
         tls_id:str,
@@ -28,6 +28,7 @@ def make_env(
         use_gui:bool,
         log_file:str, 
         env_index:int,
+        tls_action_type:str='choose_next_phase',
         trip_info:str=None,
         copy_files:List[str]=[],
     ):
@@ -38,10 +39,10 @@ def make_env(
             trip_info=trip_info,
             num_seconds=num_seconds,
             tls_id=tls_id, 
-            tls_action_type='choose_next_phase',
+            tls_action_type=tls_action_type,
             use_gui=use_gui,
         )
-        tsc_wrapper = RLTSCEnvWrapper(
+        tsc_wrapper = BaseTSCEnvWrapper(
             tsc_scenario, phase_num=phase_num, 
             tls_id=tls_id, copy_files=copy_files
         )

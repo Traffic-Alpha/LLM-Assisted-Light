@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-09-08 15:57:34
 @Description: 测试 TSC Env 环境
-@LastEditTime: 2023-11-25 15:39:55
+@LastEditTime: 2023-11-27 22:29:19
 '''
 import numpy as np
 from loguru import logger
@@ -20,10 +20,12 @@ if __name__ == '__main__':
     net_file = path_convert("../TSCScenario/3way/env/3way.net.xml")
     log_path = path_convert('./3way_log/')
     trip_info = path_convert('./rl 3way.xml')
+    tls_action_type = 'next_or_not'
     tsc_env_generate = make_env(
         tls_id='J1',
         num_seconds=500,
-        phase_num=3,
+        phase_num=2 if tls_action_type=='next_or_not' else 4,
+        tls_action_type=tls_action_type,
         sumo_cfg=sumo_cfg, 
         net_file=net_file,
         trip_info=trip_info,
@@ -42,7 +44,10 @@ if __name__ == '__main__':
     dones = False
     tsc_env.reset()
     while not dones:
-        action = np.random.randint(3)
+        if tls_action_type == 'next_or_not':
+            action = np.random.randint(2)
+        else:
+            action = np.random.randint(3) # 这里需要根据相位数量进行修改
         states, rewards, truncated, dones, infos = tsc_env.step(action=action)
         logger.info(f"SIM: {infos['step_time']} \n+State:{states}; \n+Reward:{rewards}.")
     tsc_env.close()

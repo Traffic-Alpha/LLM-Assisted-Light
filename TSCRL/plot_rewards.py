@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2023-11-01 23:46:03
 @Description: Reward Curve for Single TSC
-@LastEditTime: 2023-11-28 17:47:41
+@LastEditTime: 2024-01-30 09:58:40
 '''
 from tshub.utils.plot_reward_curves import plot_multi_reward_curves
 from tshub.utils.get_abs_path import get_abs_path
@@ -10,7 +10,7 @@ path_convert = get_abs_path(__file__)
 
 
 if __name__ == '__main__':
-    env_name = '4way'
+    env_name = '3way'
     dirs_and_labels = {
         'Choose Next Phase': [
             path_convert(f'./result/{env_name}/choose_next_phase/log/{i}.monitor.csv')
