@@ -2,7 +2,7 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2024-01-30 10:50:30
+ * @LastEditTime: 2024-02-05 17:49:10
 -->
 # LLM-Assisted Light (LA-Light)
 
@@ -54,8 +54,15 @@ To test LA-Light, run the following script. In this case, we will randomly gener
 python llm_rl.py --env_name '4way' --phase_num 4 --edge_block 'E1' --detector_break 'E2--s'
 ```
 
+The effect of running the above test is shown in the following video. Each decision made by LA-Light involves multiple tool invocations and subsequent decisions based on the tool's return results, culminating in a final decision and explanation.
+
 [LLM_for_TSC_README.webm](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/131281d9-831d-4e08-919c-2ee8ac3fd841)
 
+Due to the video length limit, we only captured part of the first decision-making process, including:
+
+- Action 1: Obtaining the intersection layout, the number of lanes, and lane functions (turn left, go straight, or turn right) for each edge.
+- Action 3: Obtaining the occupancy of each edge. The -E3 straight line has a higher occupancy rate, corresponding to the simulation. At this point, LA-Light can use tools to obtain real-time road network information.
+- Final Decision and Explanation: Based on a series of results, LA-Light provides the final decision and explanation.
 
 ## Acknowledgments
 
