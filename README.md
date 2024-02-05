@@ -54,7 +54,7 @@ To test LA-Light, run the following script. In this case, we will randomly gener
 python llm_rl.py --env_name '4way' --phase_num 4 --edge_block 'E1' --detector_break 'E2--s'
 ```
 
-
+[LLM_for_TSC_README.webm](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/131281d9-831d-4e08-919c-2ee8ac3fd841)
 
 
 ## Acknowledgments
