@@ -8,12 +8,10 @@
 
 LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios
 
-<div align="center">
-  <a href="https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19">
-    <img src="https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19" width="80%" alt="视频链接">
-  </a>
-  <p>123</p>
-</div>
+<p align="center">
+  <iframe width="80%" height="auto" src="https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</p>
+
 
 
 ## Overall Framework
