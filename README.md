@@ -8,6 +8,23 @@
 
 LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios
 
+<div align="center">
+  <video width="80%" controls>
+    <source src="https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p>这里是第一个视频的描述文字。</p>
+</div>
+
+<div align="center" style="margin-top: 20px;">
+  <video width="80%" controls>
+    <source src="https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p>这里是第二个视频的描述文字。</p>
+</div>
+
+
 ## Overall Framework
 
 The LA-Light framework introduces an innovative hybrid decision-making process for TSC that leverages the cognitive capabilities of LLMs alongside traditional traffic management methodologies. This framework includes **five methodical steps** for decision-making: 
