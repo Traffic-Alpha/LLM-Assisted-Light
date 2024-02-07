@@ -9,7 +9,13 @@
 LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios
 
 [Scenario_1](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/e7063493-30a7-4f12-95b5-6b0661e48f19)
-<p align="center"><strong>Examples of LA-Lights Utilizing Tools to Control Traffic Signals</strong></p>
+<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Normal Scenario)</strong></p>
+
+
+
+[Scenario_2](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/9062f888-314d-43f8-b668-9ad46471504c)
+<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Emergency Vehicle (EMV) Scenario)</strong></p>
+
 
 ## Overall Framework
 
