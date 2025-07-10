@@ -2,36 +2,47 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2024-02-05 17:49:10
+ * @LastEditTime: 2025-07-10 22:15:19
 -->
-# LLM-Assisted Light (LA-Light)
+# 🚦 LLM-Assisted Light (LA-Light)
 
-LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios
+[![arXiv](https://img.shields.io/badge/arXiv-2403.08337-b31b1b.svg)](https://arxiv.org/abs/2403.08337)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+![Version](https://img.shields.io/badge/version-1.0.0-green)
 
-[Scenario_1](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/3075d18c-a6eb-4b5c-bdc9-f79936e13dc2)
-<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Normal Scenario)</strong></p>
+Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios](https://arxiv.org/abs/2403.08337).
 
-[Scenario_2](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/9062f888-314d-43f8-b668-9ad46471504c)
-<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Emergency Vehicle (EMV) Scenario)</strong></p>
+## 📢 Latest News
+- **[July 2025]** **Introducing [VLMLight](https://github.com/Traffic-Alpha/VLMLight)**: Our next-generation framework featuring **image-based traffic signal control** using Vision-Language Models (VLMs) for enhanced scene understanding and real-time decision-making.
+- **[August 2023]** We have migrated the simulation platform used in this project from Aiolos to [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub) (TSHub). We would like to express our sincere gratitude to our colleagues at SenseTime, **@KanYuheng (阚宇衡)**, **@MaZian (马子安)**, and **@XuChengcheng (徐承成)** (in alphabetical order) for their valuable contributions. The development of TransSimHub (TSHub) is a continuation of the work done on Aiolos.
 
 
-## Overall Framework
+## 🧩 Core Framework
 
-The LA-Light framework introduces an innovative hybrid decision-making process for TSC that leverages the cognitive capabilities of LLMs alongside traditional traffic management methodologies. This framework includes **five methodical steps** for decision-making: 
-- **Step 1** outlines the task planning phase where the LLM defines its role in traffic management. 
-- **Step 2** involves the selection of appropriate perception and decision-making tools by the LLM. 
-- **Step 3** utilizes these tools interact with the traffic environment to gather data. 
-- **Step 4** depicts the analysis of this data by the Decision Unit to inform decision-making. 
-- **Step 5** illustrates the implementation of the LLM's decisions and the provision of explanatory feedback for system transparency and validation
+Five-stage hybrid decision-making for human-AI collaborative traffic control:
+1. **Task Planning**: LLM defines traffic management role  
+2. **Tool Selection**: Dynamically invokes perception & decision tools  
+3. **Environment Interaction**: Real-time traffic data collection  
+4. **Data Analysis**: Decision unit generates control strategies  
+5. **Execution Feedback**: Implements decisions with explainable justifications
 
 <div align=center>
   <img width="90%" src="./assets/framework.png" />
 </div>
 
+## 🧪 Quick Validation
 
-## Evaluating LA-Light
+### 🛠️ Installation
 
-### Training and Evaluating the RL Model
+Install [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub):
+```bash
+git clone https://github.com/Traffic-Alpha/TransSimHub.git
+cd TransSimHub
+pip install -e ".[all]"
+```
+
+### 🤖 RL Model Training & Evaluation
 
 For training and evaluating the RL model, refer to [TSCRL](./TSCRL/). You can use the following command to start training:
 
@@ -45,7 +56,7 @@ The [RL Result](./TSCRL/result/) directory contains the trained models and train
 python eval_rl_agent.py
 ```
 
-### Pure LLM
+### 🧠 Pure LLM Inference
 
 To directly use LLM for inference without invoking any tools, run the following script:
 
@@ -53,7 +64,7 @@ To directly use LLM for inference without invoking any tools, run the following 
 python llm.py --env_name '3way' --phase_num 3 --detector_break 'E0--s'
 ```
 
-### Decision Making with LLM + RL
+### 🔀 LA-Light Joint Decision-Making
 
 To test LA-Light, run the following script. In this case, we will randomly generate congestion on `E1` and the sensor on the `E2--s` direction will fail.
 
@@ -71,7 +82,15 @@ Due to the video length limit, we only captured part of the first decision-makin
 - Action 3: Obtaining the occupancy of each edge. The -E3 straight line has a higher occupancy rate, corresponding to the simulation. At this point, LA-Light can use tools to obtain real-time road network information.
 - Final Decision and Explanation: Based on a series of results, LA-Light provides the final decision and explanation.
 
-## Citation
+## 🎥 Scenario Demos
+
+[Scenario_1](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/3075d18c-a6eb-4b5c-bdc9-f79936e13dc2)
+<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Normal Scenario)</strong></p>
+
+[Scenario_2](https://github.com/Traffic-Alpha/LLM-Assisted-Light/assets/21176109/9062f888-314d-43f8-b668-9ad46471504c)
+<p align="center">Examples of LA-Lights Utilizing Tools to Control Traffic Signals <strong>(Emergency Vehicle (EMV) Scenario)</strong></p>
+
+## 📜 Citation
 
 If you find this work useful, please cite our papers:
 
@@ -84,13 +103,13 @@ If you find this work useful, please cite our papers:
 }
 ```
 
-## Acknowledgments
+## 🤝 Open-Source Foundations
 
-We would like to thank the authors and developers of the following projects, this project is built upon these great open-sourced projects.
+This project stands on the shoulders of these open-source giants:
 - [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub)
 - [LangChain](https://github.com/hwchase17/langchain)
 - [stable-baselines3](https://github.com/DLR-RM/stable-baselines3)
 
-## Contact
+## 📮 Contact
 
-- If you have any questions, please report issues on GitHub.
+If you have any questions, please report issues on GitHub.
