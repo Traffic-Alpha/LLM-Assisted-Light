@@ -1,0 +1,33 @@
+# 4-way Intersection - Accident Scenario
+# Multiple accidents and special events
+# Time format: seconds from simulation start
+
+ACCIDENTS:
+  - id: accident_01
+    depart_time: 150
+    edge_id: "-E1"
+    lane_index: 1
+    position: 137.0
+    type: "parked_car"
+    duration: 50
+
+  - id: accident_02
+    depart_time: 250
+    edge_id: "E0"
+    lane_index: 1
+    position: 118.0
+    type: "barrier"
+    duration: 60
+
+SENSOR_FAILURES:
+  - id: sensor_fail_E2
+    depart_time: 180
+    detector_id: "E2--s"
+    duration: 60
+
+SPECIAL_VEHICLES:
+  - id: ambulance_01
+    vehicle_type: "ambulance"
+    depart_time: 220
+    route: ["E0", "-E2"]
+    priority: 1

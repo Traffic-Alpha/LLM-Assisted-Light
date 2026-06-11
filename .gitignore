@@ -6,6 +6,12 @@ __pycache__/
 
 # config
 utils/config.yaml
+CODEX_MEMORY.md
+
+# Local IDE / agent state
+.vscode/
+.agents/
+.codex/
 
 # C extensions
 *.so
@@ -13,6 +19,7 @@ utils/config.yaml
 # sumo
 *.output.xml
 *.out.xml
+*.tripinfo.xml
 
 # Distribution / packaging
 .Python
@@ -131,6 +138,8 @@ celerybeat.pid
 .env
 .venv
 env/
+!scenarios/**/env/
+!scenarios/**/env/**
 venv/
 ENV/
 env.bak/

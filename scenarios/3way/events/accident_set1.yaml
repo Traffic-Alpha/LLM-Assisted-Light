@@ -1,0 +1,18 @@
+# 3-way Intersection - Accident Scenario
+# Multiple accidents on different edges
+# Time format: seconds from simulation start
+
+ACCIDENTS:
+  - id: accident_01
+    depart_time: 150
+    edge_id: "E0"
+    lane_index: 1
+    position: 50.0
+    type: "parked_car"       # Type of obstacle
+    duration: 100            # Last for 100 seconds
+
+SENSOR_FAILURES:
+  - id: sensor_fail_E0
+    depart_time: 180
+    detector_id: "E0--s"
+    duration: 50

@@ -1,0 +1,26 @@
+# 4-way Intersection - Default Events Configuration
+# Accident obstacle and sensor failure scenario
+# Time format: seconds from simulation start
+
+ACCIDENTS:
+  - id: accident_01
+    depart_time: 170
+    edge_id: "E1"
+    lane_index: 1
+    position: 100.0
+    type: "barrier"
+    duration: 30              # Stop for 30 seconds
+
+SENSOR_FAILURES:
+  - id: sensor_fail_E2
+    depart_time: 220
+    detector_id: "E2--s"      # South detector of E2
+    duration: 30              # Fail for 30 seconds
+
+# Special vehicles are optional - uncomment to enable
+# SPECIAL_VEHICLES:
+#   - id: ambulance_01
+#     vehicle_type: "ambulance"
+#     depart_time: 180
+#     route: ["E1", "J1", "E4"]
+#     priority: 1
