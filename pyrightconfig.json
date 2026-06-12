@@ -1,0 +1,23 @@
+{
+  "venvPath": "/home/wmn/anaconda3/envs",
+  "venv": "tshub",
+  "typeCheckingMode": "basic",
+  "diagnosticSeverityOverrides": {
+    "reportIncompatibleMethodOverride": "warning"
+  },
+  "extraPaths": [
+    ".",
+    "/home/wmn/code/TransSimHub",
+    "/home/wmn/anaconda3/envs/tshub/lib/python3.11/site-packages"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        ".",
+        "/home/wmn/code/TransSimHub",
+        "/home/wmn/anaconda3/envs/tshub/lib/python3.11/site-packages"
+      ]
+    }
+  ]
+}

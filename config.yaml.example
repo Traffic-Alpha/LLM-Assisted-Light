@@ -1,0 +1,31 @@
+# LLM-Assisted Light Configuration File
+# 项目配置文件 - 支持通过环境变量覆盖
+
+# ==========================================
+# OpenAI API Settings
+# ==========================================
+OPENAI_API_KEY: ""          # 从环境变量读取: OPENAI_API_KEY
+OPENAI_API_MODEL: "gpt-4"   # 模型选择
+OPENAI_API_BASE: "https://api.openai.com/v1"  # API 地址
+OPENAI_PROXY: null          # 代理设置 (可选)
+OPENAI_TEMPERATURE: 0.0     # LLM 温度 (0.0-2.0)
+
+# ==========================================
+# Agent Configuration
+# ==========================================
+MAX_ITERATIONS: 8           # ReAct 最大迭代次数
+LLM_VERBOSE: true           # 是否输出详细日志
+
+# ==========================================
+# Simulation Parameters
+# ==========================================
+TOTAL_SIMULATION_TIME: 500  # 仿真总时长 (秒)
+
+# ==========================================
+# 注意事项
+# ==========================================
+# 1. 环境变量优先级更高: export OPENAI_API_KEY="sk-..."
+# 2. TOTAL_SIMULATION_TIME 可动态调整，无需修改 Python 代码
+# 3. 特殊车辆、事故、道路限速和传感器故障从 scenarios/<env>/events/*.yaml 加载
+# 4. 运行时使用 --event-config default 或 --event-config accident_set1 选择事件配置
+# 5. 查看 llm_tsc/config.py 了解所有支持的配置项

@@ -370,15 +370,64 @@ class EnvironmentEventWrapper(gym.Wrapper):
             "sensor_failures": sorted(self.active_sensor_failures),
         }
 
+    def _find_env_attr(self, attr_name: str) -> Any:
+        target: Any = self.env
+        seen: Set[int] = set()
+        while target is not None and id(target) not in seen:
+            seen.add(id(target))
+            if hasattr(target, attr_name):
+                return getattr(target, attr_name)
+            target = getattr(target, "env", None)
+        return None
+
+    def _get_accident_affected_movements(self, edge_id: str) -> list[str]:
+        movement_ids = self._find_env_attr("movement_ids") or []
+        affected = []
+        for movement_id in movement_ids:
+            in_edge = str(movement_id).split("--")[0]
+            if in_edge == edge_id and not str(movement_id).endswith("--r"):
+                affected.append(str(movement_id))
+        return affected
+
+    def get_accident_details(self) -> list[Dict[str, Any]]:
+        active_accidents = self.event_config.active_events(self.sim_time)["accidents"]
+        details = []
+        for accident in active_accidents:
+            lane_id = f"{accident.edge_id}_{accident.lane_index}"
+            details.append(
+                {
+                    "id": accident.id,
+                    "edge_id": accident.edge_id,
+                    "lane_id": lane_id,
+                    "lane_index": accident.lane_index,
+                    "position": accident.position,
+                    "type": accident.type,
+                    "inserted": accident.id in self.inserted_accidents,
+                    "affected_movements": self._get_accident_affected_movements(
+                        accident.edge_id
+                    ),
+                }
+            )
+        return details
+
     def get_junction_situation(self) -> Dict[str, Any]:
         base_situation: Dict[str, Any] = {}
         base_method = getattr(self.env, "get_junction_situation", None)
         if callable(base_method):
             base_situation = cast(Dict[str, Any], base_method())
+        accident_details = self.get_accident_details()
         return {
             **base_situation,
             "configured_events": self.event_config.summary(),
             "active_events": self.get_active_events(),
+            "accident_details": accident_details,
+            "blocked_movements": sorted(
+                {
+                    movement
+                    for detail in accident_details
+                    for movement in detail["affected_movements"]
+                }
+            ),
         }
 
 

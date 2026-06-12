@@ -6,15 +6,48 @@
 @LastEditTime: 2026-06-12 00:51:46
 '''
 import argparse
+import json
+from pathlib import Path
+from typing import Any, Dict
 
 from llm_tsc.logger import logger
 from tshub.utils.get_abs_path import get_abs_path
 from tshub.utils.init_log import set_logger
 
-from llm_tsc.maxpressure import MaxPressureController
 from traffic_env.base_tsc_wrapper import BaseTSCEnvWrapper
 from traffic_env.event_wrapper import create_event_wrapper
 from traffic_env.tsc_env import TrafficSignalEnv
+
+
+def parse_phase_id(value: Any) -> int | None:
+    try:
+        return int(str(value).split("-")[-1])
+    except (TypeError, ValueError):
+        return None
+
+
+def snapshot_env_decision_state(env) -> Dict[str, Any]:
+    state: Dict[str, Any] = {}
+    try:
+        state["traditional_decision"] = env.get_traditional_decision()
+    except Exception as e:
+        state["traditional_error"] = str(e)
+
+    try:
+        state["junction_situation"] = env.get_junction_situation()
+    except Exception as e:
+        state["junction_error"] = str(e)
+
+    return state
+
+
+def append_decision_log(log_path: str | None, record: Dict[str, Any]) -> None:
+    if not log_path:
+        return
+    path = Path(log_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def main() -> None:
@@ -24,6 +57,7 @@ def main() -> None:
     parser.add_argument("--event-config", default=None, help="Full event YAML path")
     parser.add_argument("--tls-id", default="J1", help="Traffic light id")
     parser.add_argument("--num-seconds", type=int, default=500, help="Simulation horizon")
+    parser.add_argument("--decision-log", default=None, help="Optional JSONL path for per-decision logs")
     parser.add_argument("--gui", action="store_true", help="Run SUMO with GUI")
     args = parser.parse_args()
 
@@ -44,18 +78,38 @@ def main() -> None:
     )
     wrapped = BaseTSCEnvWrapper(env=env, tls_id=args.tls_id, phase_num=args.phase_num)
     wrapped = create_event_wrapper(wrapped, args.scenario, event_config)
-    controller = MaxPressureController(args.phase_num)
 
     done = False
     sim_time = 0
     phase_id = 0
-    last_info = {}
     wrapped.reset()
 
     while not done and sim_time < args.num_seconds:
-        phase_id = controller.act(last_info, fallback_phase=phase_id)
+        env_state = snapshot_env_decision_state(wrapped)
+        recommended_phase = (
+            env_state.get("traditional_decision", {}).get("recommended_phase")
+        )
+        parsed_phase = parse_phase_id(recommended_phase)
+        if parsed_phase is not None:
+            phase_id = parsed_phase
+        phase_id %= args.phase_num
+        append_decision_log(
+            args.decision_log,
+            {
+                "sim_time": sim_time,
+                "controller": "maxpressure",
+                "source": "maxpressure",
+                "phase_id": phase_id,
+                **env_state,
+            },
+        )
+        logger.info(
+            "Decision at {}s: phase={}, traditional={}",
+            sim_time,
+            phase_id,
+            env_state.get("traditional_decision", {}).get("recommended_phase"),
+        )
         _, _, _, done, info = wrapped.step(phase_id)
-        last_info = info
         sim_time = info["step_time"]
 
     wrapped.close()

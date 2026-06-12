@@ -335,7 +335,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
             return rescue_movement_ids
 
     def get_traditional_decision(self) -> Dict[str, Any]:
-        """用当前 phase occupancy 做一个轻量 SOTL baseline。"""
+        """用当前 phase occupancy 做一个轻量 max-pressure baseline。"""
         movement_occ: Dict[str, float] = {}
         for movement_id, value in self.get_current_occupancy().items():
             if value == "-1":
@@ -350,7 +350,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
                 if movement_id in movement_occ
             ]
             phase_scores[f"Phase-{phase_index}"] = (
-                max(valid_values) if valid_values else 0.0
+                sum(valid_values) if valid_values else 0.0
             )
 
         best_phase = max(phase_scores, key=lambda phase: phase_scores[phase]) if phase_scores else "Phase-0"
