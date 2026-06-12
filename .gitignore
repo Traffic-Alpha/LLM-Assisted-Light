@@ -5,6 +5,7 @@ __pycache__/
 *.db
 
 # config
+config.yaml
 utils/config.yaml
 CODEX_MEMORY.md
 
