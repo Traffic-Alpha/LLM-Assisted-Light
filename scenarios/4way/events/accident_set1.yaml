@@ -9,7 +9,7 @@ ACCIDENTS:
     lane_index: 1
     position: 137.0
     type: "parked_car"
-    duration: 30
+    duration: 50
 
   - id: accident_02
     depart_time: 250
@@ -17,11 +17,11 @@ ACCIDENTS:
     lane_index: 1
     position: 118.0
     type: "barrier"
-    duration: 30
+    duration: 50
 
 SENSOR_FAILURES:
   - id: sensor_fail_E2
-    depart_time: 180
+    depart_time: 310
     detector_id: "E2--s"
     duration: 50
 

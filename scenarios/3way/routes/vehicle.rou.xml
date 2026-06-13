@@ -133,9 +133,6 @@
     <vehicle id="E0__0__ego.1" type="ego" depart="36.79" departLane="random">
         <route edges="E0 E1"/>
     </vehicle>
-    <vehicle id="E0__0__rescue.0" type="rescue" depart="39.15" departLane="random">
-        <route edges="E0 -E2"/>
-    </vehicle>
     <vehicle id="E0__0__ego.2" type="ego" depart="40.54" departLane="random">
         <route edges="E0 E1"/>
     </vehicle>
@@ -477,9 +474,6 @@
     </vehicle>
     <vehicle id="E0__3__background.4" type="background" depart="199.40" departLane="random">
         <route edges="E0 E1"/>
-    </vehicle>
-    <vehicle id="E2__3__rescue.0" type="rescue" depart="201.15" departLane="random">
-        <route edges="E2 E1"/>
     </vehicle>
     <vehicle id="-E1__3__background.3" type="background" depart="201.25" departLane="random">
         <route edges="-E1 -E0"/>

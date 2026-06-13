@@ -2,7 +2,7 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2026-06-13 23:59:47
+ * @LastEditTime: 2026-06-14 01:08:59
 -->
 # 🚦 LLM-Assisted Light (LA-Light)
 
@@ -20,7 +20,7 @@ Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Contro
 - **[August 2023]** We have migrated the simulation platform used in this project from Aiolos to [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub) (TSHub). We would like to express our sincere gratitude to our colleagues at SenseTime, **@KanYuheng (阚宇衡)**, **@MaZian (马子安)**, and **@XuChengcheng (徐承成)** (in alphabetical order) for their valuable contributions. The development of TransSimHub (TSHub) is a continuation of the work done on Aiolos.
 
 
-## 🧩 Core Framework
+## 🧩 Core Framework of LLM-Assisted Light
 
 Five-stage hybrid decision-making for human-AI collaborative traffic control:
 1. **Task Planning**: LLM defines traffic management role
@@ -32,6 +32,24 @@ Five-stage hybrid decision-making for human-AI collaborative traffic control:
 <div align=center>
   <img width="90%" src="./assets/framework.png" />
 </div>
+
+## 🌐 Complex Urban Scenarios
+
+LA-Light is built for **dynamic special events** in urban traffic:
+
+- **`ACCIDENTS`** — a lane is blocked (simulated with a stopped vehicle)
+- **`SPECIAL_VEHICLES`** — emergency vehicles need priority
+- **`SENSOR_FAILURES`** — occupancy readings are masked
+
+<div align="center">
+  <img width="45%" src="./assets/roadblock.png" />
+  <img width="45%" src="./assets/special_vehicle.png" />
+</div>
+<p align="center">
+  <strong>Left — Road blockage (<code>ACCIDENTS</code>)</strong> &nbsp;·&nbsp; <strong>Right — Special vehicle (<code>SPECIAL_VEHICLES</code>)</strong>
+</p>
+
+Events are declared in YAML and injected via `--event-config`; see [Event-Aware Evaluation](#-event-aware-evaluation).
 
 ## 🧪 Quick Validation
 
@@ -45,12 +63,6 @@ Install [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub):
 git clone https://github.com/Traffic-Alpha/TransSimHub.git
 cd TransSimHub
 pip install -e ".[all]"
-```
-
-Install the small dependency set used by this repository:
-
-```bash
-pip install openai pyyaml loguru gymnasium numpy pytest
 ```
 
 Copy and edit the local configuration file:
@@ -69,23 +81,12 @@ Run the LLM-based traffic signal controller:
 python run_llm_tsc.py \
   --scenario 4way \
   --phase-num 4 \
-  --event-config scenarios/4way/events/accident_set1.yaml
-```
-
-The current controller uses the LLM agent for every traffic-signal decision step. It queries tools for intersection layout, signal phases, current occupancy, traditional max-pressure recommendation, emergency vehicles, accident details, blocked movements, and sensor failures.
-
-Optional decision logs:
-
-```bash
-python run_llm_tsc.py \
-  --scenario 4way \
-  --phase-num 4 \
   --event-config scenarios/4way/events/accident_set1.yaml \
   --decision-log /tmp/llm_decision.jsonl \
   --raw-response-log /tmp/llm_raw.jsonl
 ```
 
-`--decision-log` stores structured decision records. `--raw-response-log` stores raw LLM outputs separately for debugging.
+The current controller uses the LLM agent for every traffic-signal decision step. It queries tools for intersection layout, signal phases, current occupancy, traditional max-pressure recommendation, emergency vehicles, accident details, blocked movements, and sensor failures. `--decision-log` stores structured decision records. `--raw-response-log` stores raw LLM outputs separately for debugging.
 
 ### 📊 Max-Pressure Baseline
 
@@ -103,17 +104,13 @@ The baseline uses the environment's `get_traditional_decision()` recommendation,
 
 ### 🚑 Event-Aware Evaluation
 
-Events are configured in:
+The [complex urban scenarios](#-complex-urban-scenarios) above are declared per scenario in:
 
 ```text
 scenarios/<scenario>/events/*.yaml
 ```
 
-Supported event types:
-
-- `ACCIDENTS`: insert stopped obstacle vehicles and expose affected movements
-- `SPECIAL_VEHICLES`: schedule ambulance/police/rescue vehicles
-- `SENSOR_FAILURES`: mask detector/movement occupancy
+and injected at runtime via `--event-config`. The supported sections are `ACCIDENTS`, `SPECIAL_VEHICLES`, and `SENSOR_FAILURES`.
 
 Compare tripinfo results, including both regular traffic and special-vehicle efficiency:
 
@@ -131,12 +128,6 @@ The report separates:
 
 See [docs/event_config.md](docs/event_config.md) for event configuration details.
 
-### 🧪 Tests
-
-```bash
-python -m pytest tests
-```
-
 ### Notes on the Current Lightweight Code
 
 The original project included RL training/evaluation and legacy launchers. The current runnable validation path is centered on:
@@ -145,7 +136,7 @@ The original project included RL training/evaluation and legacy launchers. The c
 - `run_maxpressure.py`: aligned max-pressure baseline
 - `analyze_tsc_results.py`: regular/special vehicle metric comparison
 
-RL training and trained models are not included in this lightweight validation path.
+RL training and trained models are not included in this lightweight validation path. For single-intersection RL-based TSC code, see [single-tsc-baselines](https://github.com/Traffic-Alpha/single-tsc-baselines).
 
 ## 🎥 LA-Light Joint Decision-Making Demo
 
