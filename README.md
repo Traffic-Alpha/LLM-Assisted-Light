@@ -51,7 +51,7 @@ LA-Light is built for **dynamic special events** in urban traffic:
 
 Events are declared in YAML and injected via `--event-config`; see [Event-Aware Evaluation](#-event-aware-evaluation).
 
-## 🧪 Quick Validation
+## 🚀 Getting Started with LA-Light
 
 The current lightweight validation code keeps the LA-Light tool-calling idea and runs on single-intersection TSHub/SUMO scenarios with configurable traffic events.
 
