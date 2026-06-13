@@ -4,7 +4,7 @@
 @Description: Run the max-pressure baseline on the same scenarios/events.
 --> python run_maxpressure.py --scenario 4way --event-config scenarios/4way/events/accident_set1.yaml \
     --decision-log maxpressure_decisions.json --gui
-@LastEditTime: 2026-06-13 22:29:08
+@LastEditTime: 2026-06-13 22:31:15
 '''
 import re
 import json
@@ -67,7 +67,7 @@ def main() -> None:
     path_convert = get_abs_path(__file__)
     set_logger(path_convert("./"))
     config = load_config()
-    num_seconds = config["TOTAL_SIMULATION_TIME"] # 仿真时长统一由 config 控制
+    num_seconds = config["TOTAL_SIMULATION_TIME"] # 仿真时长
     event_config = args.event_config
 
     env = TrafficSignalEnv(
@@ -91,8 +91,7 @@ def main() -> None:
         env_state = snapshot_env_decision_state(wrapped)
         recommended_phase = (
             env_state.get("traditional_decision", {}).get("recommended_phase")
-        ) # 
-        breakpoint()
+        )
         parsed_phase = parse_phase_id(recommended_phase)
         if parsed_phase is not None:
             phase_id = parsed_phase
