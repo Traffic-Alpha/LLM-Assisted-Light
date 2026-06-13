@@ -1,8 +1,10 @@
 '''
 @Author: WANG Maonan
 @Date: 2026-06-11 18:09:09
-@Description: Minimal LLM-based traffic signal controller (LLM-Assisted Light).
-@LastEditTime: 2026-06-12 23:01:03
+@Description: LLM-based traffic signal controller (LLM-Assisted Light).
+--> python run_llm_tsc.py --scenario 4way --event-config scenarios/4way/events/accident_set1.yaml \
+    --decision-log llm_tsc_decisions.json --raw-response-log llm_tsc_raw_responses.json --gui
+@LastEditTime: 2026-06-13 22:33:30
 '''
 import re
 import json
@@ -15,6 +17,7 @@ from openai import OpenAI
 from llm_tsc.logger import logger
 
 from tshub.utils.get_abs_path import get_abs_path
+from tshub.utils.format_dict import dict_to_str
 from tshub.utils.init_log import set_logger
 
 from llm_tsc.agent import SimplifiedReActAgent
@@ -28,10 +31,10 @@ from traffic_env.tsc_env import TrafficSignalEnv
 
 
 def parse_phase_id(value) -> int | None:
-    try:
-        return int(str(value).split("-")[-1])
-    except (TypeError, ValueError):
+    if value is None:
         return None
+    match = re.search(r"\d+", str(value))
+    return int(match.group()) if match else None
 
 
 def parse_agent_response(response: str) -> Dict:
@@ -105,7 +108,7 @@ def append_decision_log(log_path: str | None, record: Dict[str, Any]) -> None:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def build_env(args):
+def build_env(args, num_seconds: int):
     path_convert = get_abs_path(__file__)
     route_type = "vehicle"
     sumo_cfg = path_convert(f"./scenarios/{args.scenario}/env/{route_type}.sumocfg")
@@ -116,7 +119,7 @@ def build_env(args):
         sumo_cfg=sumo_cfg,
         net_file=net_file,
         trip_info=trip_info,
-        num_seconds=args.num_seconds,
+        num_seconds=num_seconds,
         tls_id=args.tls_id,
         tls_action_type="choose_next_phase",
         use_gui=args.gui,
@@ -126,13 +129,29 @@ def build_env(args):
         tls_id=args.tls_id,
         phase_num=args.phase_num,
     )
-    event_config = args.event_config or path_convert(
-        f"./scenarios/{args.scenario}/events/default.yaml"
-    )
     return create_event_wrapper(
         env=wrapped,
         env_name=args.scenario,
-        event_config_name=event_config,
+        event_config_name=args.event_config,
+    )
+
+
+def build_static_context(env) -> str:
+    """Build the episode-fixed intersection description for the system prompt.
+
+    Layout, phase structure, and available actions do not change during an
+    episode, so they are injected into the system prompt once instead of being
+    re-fetched by the agent via tools on every decision step.
+    """
+    return "\n".join(
+        [
+            "### Layout",
+            dict_to_str(env.get_intersection_layout()),
+            "### Signal Phase Structure",
+            dict_to_str(env.get_signal_phase_structure()),
+            "### Available Actions",
+            dict_to_str(env.get_available_actions()),
+        ]
     )
 
 
@@ -140,9 +159,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Minimal LLM-based TSC runner")
     parser.add_argument("--scenario", default="4way", help="Scenario name under scenarios/")
     parser.add_argument("--phase-num", type=int, default=4, help="Number of TLS phases")
-    parser.add_argument("--event-config", default=None, help="Full event YAML path")
+    parser.add_argument("--event-config", required=True, help="Full event YAML path")
     parser.add_argument("--tls-id", default="J1", help="Traffic light id")
-    parser.add_argument("--num-seconds", type=int, default=500, help="Simulation horizon")
     parser.add_argument("--decision-log", default=None, help="Optional JSONL path for per-decision logs")
     parser.add_argument("--raw-response-log", default=None, help="Optional JSONL path for raw LLM responses")
     parser.add_argument("--gui", action="store_true", help="Run SUMO with GUI")
@@ -161,12 +179,16 @@ def main() -> None:
         timeout=60.0,
     )
 
-    env = build_env(args)
+    total_time = config["TOTAL_SIMULATION_TIME"] # 仿真时长统一由 config 控制
+    env = build_env(args, num_seconds=total_time)
+    env.reset() # reset first so static intersection info is available for the prompt
+    static_context = build_static_context(env)
+
     tools = ToolRegistry().register_from_object(TSCToolsAdapter(env))
     agent = SimplifiedReActAgent(
         llm_client=client,
         tools_dict=tools,
-        system_prompt=PromptManager.get_system_prompt(),
+        system_prompt=PromptManager.get_system_prompt(static_context),
         max_iterations=config["MAX_ITERATIONS"],
         model=config["OPENAI_API_MODEL"],
         temperature=config["OPENAI_TEMPERATURE"],
@@ -178,9 +200,7 @@ def main() -> None:
     phase_id = 0
     llm_decisions = 0
     traditional_fallbacks = 0
-    total_time = config["TOTAL_SIMULATION_TIME"]
 
-    env.reset()
     while not done:
         llm_decisions += 1
         message = PromptManager.get_agent_message(

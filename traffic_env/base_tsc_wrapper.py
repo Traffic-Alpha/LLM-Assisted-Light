@@ -4,7 +4,7 @@
 @Description: Base wrapper for single-intersection traffic signal control
 + state: 5 个时刻的每一个 movement 的 queue length
 + reward: 路口总的 waiting time
-@LastEditTime: 2026-06-12 00:21:33
+@LastEditTime: 2026-06-13 22:25:11
 '''
 import numpy as np
 import gymnasium as gym
@@ -129,7 +129,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         return occupancy, can_perform_action, one_hot_this_phase, one_hot_next_phase
     
     def reward_wrapper(self, states: Dict[str, Any]) -> float:
-        """返回整个路口的排队长度的平均值
+        """返回整个路口所有车辆等待时间总和的相反数 (negative total waiting time)
         """
         total_waiting_time = 0.0
         for _, veh_info in states['vehicle'].items():
@@ -197,6 +197,9 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         return cast(EnvStepResult, cast(Any, self.env).step(tsc_action))
 
     def _advance_to_decision_point(self, action: int) -> DecisionStepResult:
+        """与环境交互直到下一个决策点, 即 can_perform_action == True 的时刻。
+        返回这个时刻的 state, reward, done, info, 以及当前和下一个 phase 的 one-hot 编码。
+        """
         tsc_action = {self.tls_id: action}
 
         while True:
@@ -257,10 +260,14 @@ class BaseTSCEnvWrapper(gym.Wrapper):
                     'E2--l': '15.152384340763092%'
                 }
         """
+        return self._format_occupancy(self.current_avg_occ)
+
+    def _format_occupancy(self, avg_occ: Float32Array) -> Dict[str, str]:
+        """将一组平均 occupancy 与 movement id 对应, 跳过右转, 故障传感器记为 -1。"""
         output_dict: Dict[str, str] = {} # 每个 movement 的占有率
         detector_work = self.get_detector_state() # 传感器的状态
-        for movement_id, value in zip(self.movement_ids, self.current_avg_occ):
-            if 'r' in movement_id:
+        for movement_id, value in zip(self.movement_ids, avg_occ):
+            if movement_id.split('--')[-1] == 'r': # 忽略右转
                 continue
             if detector_work.get(movement_id, 'Work') == 'Not Work':
                 output_dict[movement_id] = "-1"
@@ -303,17 +310,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         """获得上一个决策周期的路口占有率。"""
         if self.previous_avg_occ is None:
             return {}
-
-        output_dict: Dict[str, str] = {}
-        detector_work = self.get_detector_state()
-        for movement_id, value in zip(self.movement_ids, self.previous_avg_occ):
-            if 'r' in movement_id:
-                continue
-            if detector_work.get(movement_id, 'Work') == 'Not Work':
-                output_dict[movement_id] = "-1"
-            else:
-                output_dict[movement_id] = f"{value*100}%"
-        return output_dict
+        return self._format_occupancy(self.previous_avg_occ)
     
     def get_rescue_movement_ids(self) -> List[str] | None:
         """获得当前 Emergency Vehicle 在什么车道上

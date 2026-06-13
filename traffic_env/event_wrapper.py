@@ -2,7 +2,7 @@
 @Author: WANG Maonan
 @Date: 2026-06-12 00:01:05
 @Description: Dynamic event wrapper for SUMO-based TSC environments.
-@LastEditTime: 2026-06-12 00:35:33
+@LastEditTime: 2026-06-13 19:27:13
 '''
 from __future__ import annotations
 
@@ -181,7 +181,6 @@ class EnvironmentEventWrapper(gym.Wrapper):
             laneIndex=int(veh_info["lane_index"]),
             duration=float(veh_info["duration"]),
         )
-        self.conn.vehicle.setSpeed(accident.id, 0)
         self.inserted_accidents.add(accident.id)
         logger.info("Inserted accident obstacle {} at {:.1f}s", accident.id, self.sim_time)
 

@@ -317,7 +317,15 @@ class SimplifiedReActAgent:
                 return final_answer or "No response"
             
             else:
+                # e.g. finish_reason == "length" (truncated). Salvage any partial
+                # content rather than discarding it.
                 logger.warning(f"Unexpected stop reason: {stop_reason}")
+                final_answer = response.choices[0].message.content
+                if final_answer:
+                    self.conversation_history.append(
+                        ConversationMessage(role="assistant", content=final_answer)
+                    )
+                    return final_answer
                 break
         
         # Max iterations reached
