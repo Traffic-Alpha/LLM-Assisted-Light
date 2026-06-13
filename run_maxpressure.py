@@ -2,14 +2,18 @@
 @Author: WANG Maonan
 @Date: 2026-06-11 18:09:09
 @Description: Run the max-pressure baseline on the same scenarios/events.
---> python run_maxpressure.py --scenario 4way --event-config scenarios/4way/events/accident_set1.yaml --gui
-@LastEditTime: 2026-06-12 00:51:46
+--> python run_maxpressure.py --scenario 4way --event-config scenarios/4way/events/accident_set1.yaml \
+    --decision-log maxpressure_decisions.json --gui
+@LastEditTime: 2026-06-13 22:29:08
 '''
-import argparse
+import re
 import json
+import argparse
+
 from pathlib import Path
 from typing import Any, Dict
 
+from llm_tsc.config import load_config
 from llm_tsc.logger import logger
 from tshub.utils.get_abs_path import get_abs_path
 from tshub.utils.init_log import set_logger
@@ -20,10 +24,10 @@ from traffic_env.tsc_env import TrafficSignalEnv
 
 
 def parse_phase_id(value: Any) -> int | None:
-    try:
-        return int(str(value).split("-")[-1])
-    except (TypeError, ValueError):
+    if value is None:
         return None
+    match = re.search(r"\d+", str(value))
+    return int(match.group()) if match else None
 
 
 def snapshot_env_decision_state(env) -> Dict[str, Any]:
@@ -54,24 +58,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Max-pressure TSC baseline")
     parser.add_argument("--scenario", default="4way", help="Scenario name under scenarios/")
     parser.add_argument("--phase-num", type=int, default=4, help="Number of TLS phases")
-    parser.add_argument("--event-config", default=None, help="Full event YAML path")
+    parser.add_argument("--event-config", required=True, help="Full event YAML path")
     parser.add_argument("--tls-id", default="J1", help="Traffic light id")
-    parser.add_argument("--num-seconds", type=int, default=500, help="Simulation horizon")
     parser.add_argument("--decision-log", default=None, help="Optional JSONL path for per-decision logs")
     parser.add_argument("--gui", action="store_true", help="Run SUMO with GUI")
     args = parser.parse_args()
 
     path_convert = get_abs_path(__file__)
     set_logger(path_convert("./"))
-    event_config = args.event_config or path_convert(
-        f"./scenarios/{args.scenario}/events/default.yaml"
-    ) # 默认的 event 配置文件路径为 scenarios/{scenario}/events/default.yaml
+    config = load_config()
+    num_seconds = config["TOTAL_SIMULATION_TIME"] # 仿真时长统一由 config 控制
+    event_config = args.event_config
 
     env = TrafficSignalEnv(
         sumo_cfg=path_convert(f"./scenarios/{args.scenario}/env/vehicle.sumocfg"),
         net_file=path_convert(f"./scenarios/{args.scenario}/env/{args.scenario}.net.xml"),
         trip_info=path_convert(f"./{args.scenario}_maxpressure.tripinfo.xml"),
-        num_seconds=args.num_seconds,
+        num_seconds=num_seconds,
         tls_id=args.tls_id,
         tls_action_type="choose_next_phase",
         use_gui=args.gui,
@@ -84,11 +87,12 @@ def main() -> None:
     phase_id = 0
     wrapped.reset()
 
-    while not done and sim_time < args.num_seconds:
+    while not done and sim_time < num_seconds:
         env_state = snapshot_env_decision_state(wrapped)
         recommended_phase = (
             env_state.get("traditional_decision", {}).get("recommended_phase")
-        )
+        ) # 
+        breakpoint()
         parsed_phase = parse_phase_id(recommended_phase)
         if parsed_phase is not None:
             phase_id = parsed_phase
