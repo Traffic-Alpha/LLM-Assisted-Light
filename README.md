@@ -2,7 +2,7 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2026-06-14 01:08:59
+ * @LastEditTime: 2026-09-18 21:03:25
 -->
 # 🚦 LLM-Assisted Light (LA-Light)
 
@@ -14,6 +14,7 @@
 Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios](https://arxiv.org/abs/2403.08337).
 
 ## 📢 Latest News
+- **[May 2026]** **Introducing [OmniTraffic Benchmark](https://huggingface.co/datasets/CROHuang/OmniTraffic_Benchmark) and [Omnitraffic Dataset](https://huggingface.co/datasets/CROHuang/Omnitraffic_Dataset)**: A large-scale benchmark and dataset for evaluating multi-view spatiotemporal reasoning and BEV perception in multimodal large language models (MLLMs). The full dataset contains over 8M generated VQA samples, with a 3.2K human-validated benchmark for reliable evaluation.
 - **[June 2026]** 🔧 **Codebase refresh**: dynamic special events (accidents, special vehicles, sensor failures) are now loaded from a YAML config (`--event-config`) instead of being hard-coded; the LLM agent no longer depends on LangChain (lightweight OpenAI-based ReAct); and static intersection info (layout, phase structure, available actions) is injected into the prompt once per episode, simplifying tool calls to dynamic state only.
 - **[September 2025]** 🎉 **VLMLight accepted at NeurIPS 2025!** Congratulations! Our VLM-based traffic signal control paper has been accepted at NeurIPS 2025. [Paper Link](https://proceedings.neurips.cc/paper_files/paper/2025/hash/3849b5861dcaeaf4758eef0979a98cc6-Abstract-Conference.html)
 - **[July 2025]** **Introducing [VLMLight](https://github.com/Traffic-Alpha/VLMLight)**: Our next-generation framework featuring **image-based traffic signal control** using Vision-Language Models (VLMs) for enhanced scene understanding and real-time decision-making.
@@ -160,7 +161,7 @@ Due to the video length limit, we only captured part of the first decision-makin
 
 ## 📜 Citation
 
-If you find this work useful, please cite our papers:
+If you find our work useful in your research, we would be grateful if you could cite our papers:
 
 ```bibtex
 @article{wang2024llm,
@@ -182,14 +183,14 @@ If you find this work useful, please cite our papers:
  year = {2025}
 }
 
-@ARTICLE{pang2026illm,
+@ARTICLE{pang2026illmtsc,
   author={Pang, Aoyu and Wang, Maonan and Pun, Man-On and Chen, Chung Shue and Xiong, Xi},
   journal={IEEE Transactions on Vehicular Technology}, 
-  title={{iLLM-TSC}: Integration Reinforcement Learning and Large Language Model for Traffic Signal Control Policy Improvement}, 
+  title={iLLM-TSC: Integration Reinforcement Learning and Large Language Model for Traffic Signal Control Policy Improvement}, 
   year={2026},
-  volume={},
-  number={},
-  pages={1-14},
+  volume={75},
+  number={8},
+  pages={15762-15776},
   doi={10.1109/TVT.2026.3674284}
 }
 ```
@@ -217,6 +218,16 @@ You may also be interested in our earlier work on RL-based traffic signal contro
   number={12},
   pages={20085-20104},
   doi={10.1109/TITS.2024.3462153}
+}
+
+@ARTICLE{pang2024delaytsc,
+  author={Pang, Aoyu and Wang, Maonan and Chen, Yirong and Pun, Man-On and Lepech, Michael},
+  journal={IEEE Open Journal of Vehicular Technology}, 
+  title={Scalable Reinforcement Learning Framework for Traffic Signal Control Under Communication Delays}, 
+  year={2024},
+  volume={5},
+  pages={330-343},
+  doi={10.1109/OJVT.2024.3368693}
 }
 ```
 
