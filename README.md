@@ -2,7 +2,7 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2026-10-13 14:30:23
+ * @LastEditTime: 2026-10-13 21:54:20
 -->
 # 🚦 LLM-Assisted Light (LA-Light)
 
@@ -19,6 +19,7 @@ Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Contro
 - **[June 2026]** 🔧 **Codebase refresh**: dynamic special events (accidents, special vehicles, sensor failures) are now loaded from a YAML config (`--event-config`) instead of being hard-coded; the LLM agent no longer depends on LangChain (lightweight OpenAI-based ReAct); and static intersection info (layout, phase structure, available actions) is injected into the prompt once per episode, simplifying tool calls to dynamic state only.
 - **[September 2025]** 🎉 **VLMLight accepted at NeurIPS 2025!** Congratulations! Our VLM-based traffic signal control paper has been accepted at NeurIPS 2025. [Paper Link](https://proceedings.neurips.cc/paper_files/paper/2025/hash/3849b5861dcaeaf4758eef0979a98cc6-Abstract-Conference.html)
 - **[July 2025]** **Introducing [VLMLight](https://github.com/Traffic-Alpha/VLMLight)**: Our next-generation framework featuring **image-based traffic signal control** using Vision-Language Models (VLMs) for enhanced scene understanding and real-time decision-making.
+- **[March 2024]** **Introducing [LLM-Assisted Light](https://arxiv.org/abs/2403.08337)**: Our framework combines **LLM reasoning with perception and decision-making tools** to mimic how traffic police manage complex intersections. It integrates real-time traffic information with established signal-control methods to support adaptive, interpretable decisions in scenarios involving emergency vehicles, road blockages, and sensor failures. The preprint is now available on [arXiv](https://arxiv.org/abs/2403.08337).
 - **[August 2023]** We have migrated the simulation platform used in this project from Aiolos to [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub) (TSHub). We would like to express our sincere gratitude to our colleagues at SenseTime, **@KanYuheng (阚宇衡)**, **@MaZian (马子安)**, and **@XuChengcheng (徐承成)** (in alphabetical order) for their valuable contributions. The development of TransSimHub (TSHub) is a continuation of the work done on Aiolos.
 
 
