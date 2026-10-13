@@ -10,7 +10,7 @@ except ModuleNotFoundError:
 
     class _Logger:
         def __init__(self) -> None:
-            self._logger = logging.getLogger("llm_tsc")
+            self._logger = logging.getLogger("tsc")
 
         def _format(self, message, *args):
             return str(message).format(*args) if args else str(message)

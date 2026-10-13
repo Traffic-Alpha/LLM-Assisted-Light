@@ -9,6 +9,7 @@ OPENAI_API_MODEL: "gpt-4"   # 模型选择
 OPENAI_API_BASE: "https://api.openai.com/v1"  # API 地址
 OPENAI_PROXY: null          # 代理设置 (可选)
 OPENAI_TEMPERATURE: 0.0     # LLM 温度 (0.0-2.0)
+OPENAI_EXTRA_BODY: {}       # 模型专用参数；DeepSeek non-thinking: {thinking: {type: disabled}}
 
 # ==========================================
 # Agent Configuration
@@ -27,5 +28,5 @@ TOTAL_SIMULATION_TIME: 500  # 仿真总时长 (秒)
 # 1. 环境变量优先级更高: export OPENAI_API_KEY="sk-..."
 # 2. TOTAL_SIMULATION_TIME 可动态调整，无需修改 Python 代码
 # 3. 特殊车辆、事故、道路限速和传感器故障从 scenarios/<env>/events/*.yaml 加载
-# 4. 运行时使用 --event-config default 或 --event-config accident_set1 选择事件配置
-# 5. 查看 llm_tsc/config.py 了解所有支持的配置项
+# 4. --event-config scenarios/3way/events/special_vehicles_accident.yaml 选择事件配置
+# 5. --config deepseek_config.yaml 选择模型配置；支持项见 common/config.py

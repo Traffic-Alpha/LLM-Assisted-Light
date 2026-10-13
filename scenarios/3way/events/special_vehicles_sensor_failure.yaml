@@ -1,0 +1,18 @@
+# 3-way: special vehicles + sensor failure. Times are seconds from simulation start.
+SPECIAL_VEHICLES:
+  - id: ambulance_00
+    vehicle_type: "ambulance"
+    depart_time: 20
+    route: ["E0", "-E2"]
+    priority: 1
+  - id: ambulance_01
+    vehicle_type: "ambulance"
+    depart_time: 220
+    route: ["E0", "-E2"]
+    priority: 1
+
+SENSOR_FAILURES:
+  - id: sensor_fail_E0
+    depart_time: 180
+    detector_id: "E0--s"
+    duration: 50

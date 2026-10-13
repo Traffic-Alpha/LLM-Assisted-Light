@@ -17,7 +17,8 @@ class TrafficSignalEnv(gym.Env[Any, Dict[str, int]]):
                  num_seconds:int, 
                  tls_id:str, 
                  tls_action_type:str, 
-                 use_gui:bool=False
+                 use_gui:bool=False,
+                 delta_time:int=5,
         ) -> None:
         super().__init__()
 
@@ -35,6 +36,7 @@ class TrafficSignalEnv(gym.Env[Any, Dict[str, int]]):
             tls_ids=[tls_id], 
             num_seconds=num_seconds,
             tls_action_type=tls_action_type,
+            delta_time=delta_time,
             use_gui=use_gui,
             is_libsumo=(not use_gui),
         )

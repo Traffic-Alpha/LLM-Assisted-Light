@@ -6,8 +6,13 @@ __pycache__/
 
 # config
 config.yaml
+deepseek_config.yaml
 utils/config.yaml
 CODEX_MEMORY.md
+
+# Local research notes and experiment outputs
+/docs/
+/results/
 
 # Local IDE / agent state
 .vscode/

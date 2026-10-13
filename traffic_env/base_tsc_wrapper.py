@@ -11,7 +11,7 @@ import gymnasium as gym
 
 from gymnasium.core import Env
 from collections import deque
-from typing import Any, Deque, SupportsFloat, Tuple, Dict, List, TypeAlias, cast
+from typing import Any, Callable, Deque, SupportsFloat, Tuple, Dict, List, TypeAlias, cast
 from numpy.typing import NDArray
 
 from traffic_env.wrapper_utils import convert_state_to_static_information, find_index
@@ -82,6 +82,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         self.ls_elements: List[str] = []
         self.mask: List[str] = []
         self.not_work_element: str | None = None
+        self.simulation_step_callback: Callable[[], None] | None = None
 
     def _get_initial_state(self) -> Float32Array:
         # 返回初始状态，这里假设所有状态都为 0
@@ -174,6 +175,7 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         self.llm_static_information = convert_state_to_static_information(state['tls'][self.tls_id]) # 路口的静态信息
         self.movement_ids = state['tls'][self.tls_id]['movement_ids']
         self.phase2movements = state['tls'][self.tls_id]['phase2movements']
+        self._cache_signal_phase_information()
         self.current_avg_occ = cast(Float32Array, np.zeros(12, dtype=np.float32)) # 初始化每一个 movement 的占有率
         self.previous_avg_occ = None
 
@@ -194,7 +196,16 @@ class BaseTSCEnvWrapper(gym.Wrapper):
         return wrapped_state, {'step_time':0}
     
     def _step_env(self, tsc_action: Dict[str, int]) -> EnvStepResult:
-        return cast(EnvStepResult, cast(Any, self.env).step(tsc_action))
+        if self.simulation_step_callback is not None:
+            self.simulation_step_callback()
+        result = cast(EnvStepResult, cast(Any, self.env).step(tsc_action))
+        if self.simulation_step_callback is not None:
+            self.simulation_step_callback()
+        return result
+
+    def set_simulation_step_callback(self, callback: Callable[[], None]) -> None:
+        """Run event updates at each SUMO step, including between decisions."""
+        self.simulation_step_callback = callback
 
     def _advance_to_decision_point(self, action: int) -> DecisionStepResult:
         """与环境交互直到下一个决策点, 即 can_perform_action == True 的时刻。
@@ -294,12 +305,60 @@ class BaseTSCEnvWrapper(gym.Wrapper):
     def get_intersection_layout(self) -> Dict[str, Any]:
         """路口的静态路网结构信息
         """
-        return self.llm_static_information["movement_infos"]
+        layout = {}
+        for movement_id, info in self.llm_static_information["movement_infos"].items():
+            layout[movement_id] = {
+                **info,
+                "lane_ids": list(self.current_tls_state["movement_lane_ids"].get(movement_id, [])),
+                "connection": self.current_tls_state["fromEdge_toEdge"].get(movement_id),
+            }
+        return layout
+
+    def get_control_constraints(self) -> Dict[str, Any]:
+        """Static timing and action semantics supplied to the controller."""
+        tls = cast(Any, self.env).tsc_env.scene_objects["tls"].traffic_lights[self.tls_id]
+        return {
+            "junction_id": self.tls_id,
+            "action_type": "choose_next_phase",
+            "decision_interval_seconds": tls.tls_action.delta_time,
+            "yellow_time_seconds": tls.tls_action.yellow_time,
+            "phase_ids": list(self.phase2movements),
+        }
 
     def get_signal_phase_structure(self) -> Dict[str, Any]:
         """路口的信号灯信息
         """
         return self.llm_static_information["phase_infos"]
+
+    def _cache_signal_phase_information(self) -> None:
+        """Map actual green signals, including permissive turns, to agent actions."""
+        env = cast(Any, self.env).tsc_env
+        conn = env.sumo
+        phases = env.scene_objects['tls'].traffic_lights[self.tls_id].tls_action.green_phases
+        links = conn.trafficlight.getControlledLinks(self.tls_id)
+        edge_movements = {(info[0], info[1]): movement for movement, info in
+                          self.current_tls_state['fromEdge_toEdge'].items()}
+        phase_infos = {}
+        for phase_id, phase in enumerate(phases):
+            movements, permissive = set(), set()
+            for entries, signal in zip(links, phase.state):
+                if signal not in 'Gg':
+                    continue
+                for in_lane, out_lane, _ in entries:
+                    movement = edge_movements.get((conn.lane.getEdgeID(in_lane), conn.lane.getEdgeID(out_lane)))
+                    if movement is not None:
+                        movements.add(movement)
+                        if signal == 'g':
+                            permissive.add(movement)
+            phase_infos[f'Phase {phase_id}'] = {
+                'phase_id': phase_id, 'movements': sorted(movements),
+                'permissive_movements': sorted(permissive),
+            }
+        self.llm_static_information['phase_infos'] = phase_infos
+
+    def _get_serving_phases(self, movement_id: str | None) -> List[int]:
+        return [info['phase_id'] for info in self.llm_static_information['phase_infos'].values()
+                if movement_id in info['movements']]
     
     def get_current_occupancy(self) -> Dict[str, str]:
         """获得当前时刻的路口状态(每一个 movement 的占有率)
@@ -364,20 +423,76 @@ class BaseTSCEnvWrapper(gym.Wrapper):
             "detector_state": self.get_detector_state(),
         }
 
-    def get_movement_state(self) -> Dict[str, bool]:
-        """得到每一个 movement 是否可以正常通行
-        """
-        _sumo = cast(Any, self.env).tsc_env.sumo
+    def get_emergency_vehicles(self, vehicle_ids: set[str] | None = None) -> List[Dict[str, Any]]:
+        """Read actual approaching vehicles, including those outside the E2 detectors."""
+        conn = cast(Any, self.env).tsc_env.sumo
+        result = []
+        connections = self.current_tls_state['fromEdge_toEdge']
+        links = conn.trafficlight.getControlledLinks(self.tls_id)
+        for vehicle_id in conn.vehicle.getIDList():
+            vehicle_type = conn.vehicle.getTypeID(vehicle_id)
+            label = f'{vehicle_id} {vehicle_type}'.lower()
+            if vehicle_id not in (vehicle_ids or set()) and not any(
+                word in label for word in ('ambulance', 'rescue', 'police', 'fire')
+            ):
+                continue
+            next_tls = next((entry for entry in conn.vehicle.getNextTLS(vehicle_id)
+                             if entry[0] == self.tls_id), None)
+            if next_tls is None:
+                continue
+            _, link_index, distance, signal = next_tls
+            in_lane, out_lane, _ = links[link_index][0]
+            in_edge = conn.lane.getEdgeID(in_lane)
+            out_edge = conn.lane.getEdgeID(out_lane)
+            movement_id = next((movement for movement, info in connections.items()
+                                if info[0] == in_edge and info[1] == out_edge), None)
+            speed = float(conn.vehicle.getSpeed(vehicle_id))
+            result.append({
+                'id': vehicle_id, 'vehicle_type': vehicle_type,
+                'route': list(conn.vehicle.getRoute(vehicle_id)),
+                'junction_route': [in_edge, out_edge],
+                'lane_id': conn.vehicle.getLaneID(vehicle_id),
+                'movement_id': movement_id,
+                'serving_phases': self._get_serving_phases(movement_id),
+                'permissive_phases': [info['phase_id'] for info in self.llm_static_information['phase_infos'].values()
+                                      if movement_id in info['permissive_movements']],
+                'distance_to_junction_m': round(float(distance), 2),
+                'speed_mps': round(speed, 2),
+                'eta_at_current_speed_s': round(float(distance) / speed, 2) if speed > 0.1 else None,
+                'waiting_time_s': float(conn.vehicle.getWaitingTime(vehicle_id)),
+                'signal_state': signal,
+            })
+        return sorted(result, key=lambda item: item['distance_to_junction_m'])
 
-        # 当 movement 的速度小于 5 的时候, 认为是不可通行的
-        movement_state: Dict[str, bool] = {}
-        for _movement_id, (_in_edge, _out_edge, _, _) in self.current_tls_state['fromEdge_toEdge'].items():
-            _, direction = _movement_id.split('--')
-            if direction != 'r': # 忽略右转
-                movement_state[_movement_id] = _sumo.lane.getMaxSpeed(f'{_out_edge}_0') > 5 
-        
-        return movement_state
-    
+    def get_movement_details(self, movement_id: str) -> Dict[str, Any]:
+        """Read lane demand; detector failures leave the readings unavailable."""
+        lane_ids = self.current_tls_state['movement_lane_ids'].get(movement_id)
+        if not lane_ids:
+            raise ValueError(f'Unknown movement: {movement_id}')
+        conn = cast(Any, self.env).tsc_env.sumo
+        working = self.get_detector_state().get(movement_id, 'Work') == 'Work'
+        return {
+            'movement_id': movement_id,
+            'serving_phases': self._get_serving_phases(movement_id),
+            'detector_state': 'Work' if working else 'Not Work',
+            'lanes': [{
+                'lane_id': lane,
+                'vehicle_count': conn.lane.getLastStepVehicleNumber(lane) if working else None,
+                'halting_vehicle_count': conn.lane.getLastStepHaltingNumber(lane) if working else None,
+                'mean_speed_mps': round(float(conn.lane.getLastStepMeanSpeed(lane)), 2) if working else None,
+            } for lane in lane_ids],
+        }
+
+    def get_movement_state(self) -> Dict[str, bool]:
+        """Report connected vehicle lanes; congestion alone is not a closure."""
+        conn = cast(Any, self.env).tsc_env.sumo
+        links = conn.trafficlight.getControlledLinks(self.tls_id)
+        connected = {(conn.lane.getEdgeID(in_lane), conn.lane.getEdgeID(out_lane))
+                     for entries in links for in_lane, out_lane, _ in entries
+                     if conn.lane.getMaxSpeed(in_lane) > 0 and conn.lane.getMaxSpeed(out_lane) > 0}
+        return {movement: (info[0], info[1]) in connected
+                for movement, info in self.current_tls_state['fromEdge_toEdge'].items()}
+
     def get_detector_state(self) -> Dict[str, str]:
         """获得探测器的工作状态
         """

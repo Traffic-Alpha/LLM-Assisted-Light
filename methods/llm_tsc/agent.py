@@ -5,9 +5,11 @@
 @LastEditTime: 2026-06-12 23:14:47
 '''
 import json
+from copy import deepcopy
+from time import perf_counter
 from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
-from llm_tsc.logger import logger
+from common.logger import logger
 
 try:
     from openai import OpenAI
@@ -23,6 +25,7 @@ class ConversationMessage:
     tool_name: Optional[str] = None
     tool_call_id: Optional[str] = None
     tool_calls: Optional[List[Dict[str, Any]]] = None
+    reasoning_content: Optional[str] = None
 
 
 class SimplifiedReActAgent:
@@ -51,6 +54,8 @@ class SimplifiedReActAgent:
         model: str = "gpt-4",
         temperature: float = 0.0,
         verbose: bool = True,
+        max_tool_rounds: int = 2,
+        extra_body: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize ReAct Agent
@@ -71,9 +76,12 @@ class SimplifiedReActAgent:
         self.model = model
         self.temperature = temperature
         self.verbose = verbose
+        self.max_tool_rounds = max_tool_rounds
+        self.extra_body = deepcopy(extra_body or {})
         
         self.conversation_history: List[ConversationMessage] = []
         self.tool_specs: List[Dict[str, Any]] = []
+        self.last_run_stats: Dict[str, Any] = {"api_calls": [], "tool_calls": []}
         self._build_tool_specs()
     
     def _build_tool_specs(self) -> None:
@@ -168,6 +176,8 @@ class SimplifiedReActAgent:
                 }
                 if msg.role == "assistant" and msg.tool_calls:
                     openai_msg["tool_calls"] = msg.tool_calls
+                if msg.role == "assistant" and msg.reasoning_content is not None:
+                    openai_msg["reasoning_content"] = msg.reasoning_content
                 messages.append(openai_msg)
         
         return messages
@@ -175,7 +185,8 @@ class SimplifiedReActAgent:
     def _execute_tool(self, tool_name: str, tool_args: Dict[str, Any]) -> str:
         """Execute tool and return observation"""
         if tool_name not in self.tools:
-            return f"Error: Tool '{tool_name}' not found. Available tools: {list(self.tools.keys())}"
+            return json.dumps({"error": {"code": "unknown_tool", "message": tool_name,
+                                          "available_tools": list(self.tools)}})
         
         try:
             tool_func = self.tools[tool_name]
@@ -193,9 +204,9 @@ class SimplifiedReActAgent:
         except Exception as e:
             error_msg = f"Tool execution error: {str(e)}"
             logger.error(error_msg)
-            return error_msg
+            return json.dumps({"error": {"code": "tool_execution_error", "message": str(e)}})
     
-    def run(self, user_query: str, reset_history: bool = False) -> str:
+    def run(self, user_query: str, reset_history: bool = False, allow_tools: bool = True) -> str:
         """
         Run ReAct loop until final answer or max iterations
         
@@ -206,6 +217,7 @@ class SimplifiedReActAgent:
         Returns:
             Final answer from LLM
         """
+        self.last_run_stats = {"api_calls": [], "tool_calls": []}
         if reset_history:
             self.conversation_history = []
         
@@ -217,6 +229,7 @@ class SimplifiedReActAgent:
         if self.verbose:
             logger.info(f"🚀 Starting ReAct loop (max {self.max_iterations} iterations)")
         
+        tool_rounds = 0
         for iteration in range(self.max_iterations):
             if self.verbose:
                 logger.info(f"\n📍 Iteration {iteration + 1}/{self.max_iterations}")
@@ -224,22 +237,38 @@ class SimplifiedReActAgent:
             # Get LLM response with function calling
             messages = self._build_messages()
             
+            api_started = perf_counter()
             try:
-                response = self.llm.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    tools=self.tool_specs,
-                    temperature=self.temperature,
-                    tool_choice="auto",
-                )
+                tools_allowed = (allow_tools and tool_rounds < self.max_tool_rounds
+                                 and iteration < self.max_iterations - 1)
+                request = {"model": self.model, "messages": messages, "temperature": self.temperature}
+                if self.extra_body:
+                    request['extra_body'] = deepcopy(self.extra_body)
+                if tools_allowed:
+                    request.update(tools=self.tool_specs, tool_choice="auto")
+                else:
+                    messages.append({"role": "user", "content": "No further tool queries. Return the final phase JSON using the supplied observations."})
+                response = self.llm.chat.completions.create(**request)
             except Exception as e:
+                self.last_run_stats["api_calls"].append({
+                    "latency_ms": (perf_counter() - api_started) * 1000,
+                    "error": str(e),
+                })
                 logger.error(f"LLM API error: {str(e)}")
                 return f"Error calling LLM: {str(e)}"
             
             # Check stop reason
             stop_reason = response.choices[0].finish_reason
+            self.last_run_stats["api_calls"].append({
+                "latency_ms": (perf_counter() - api_started) * 1000,
+                "finish_reason": stop_reason,
+                "reasoning_content_present": bool(getattr(response.choices[0].message, "reasoning_content", None)),
+            })
             
             if stop_reason == "tool_calls":
+                if not tools_allowed:
+                    return "Tool budget exhausted without a final phase decision"
+                tool_rounds += 1
                 # LLM wants to use tools
                 assistant_message = response.choices[0].message
                 
@@ -261,6 +290,7 @@ class SimplifiedReActAgent:
                         role="assistant",
                         content=assistant_message.content or "",
                         tool_calls=tool_calls,
+                        reasoning_content=getattr(assistant_message, 'reasoning_content', None),
                     )
                 )
                 
@@ -284,7 +314,18 @@ class SimplifiedReActAgent:
                             logger.warning(f"Failed to parse tool arguments for {tool_name}")
                         
                         # Execute tool
+                        tool_started = perf_counter()
                         observation = self._execute_tool(tool_name, tool_args)
+                        try:
+                            tool_result = json.loads(observation)
+                        except (ValueError, TypeError):
+                            tool_result = observation
+                        self.last_run_stats["tool_calls"].append({
+                            "name": tool_name, "arguments": tool_args,
+                            "latency_ms": (perf_counter() - tool_started) * 1000,
+                            "success": not (isinstance(tool_result, dict) and "error" in tool_result),
+                            "result": tool_result,
+                        })
                         
                         if self.verbose:
                             logger.info(f"📊 Observation: {observation[:100]}...")
@@ -307,11 +348,12 @@ class SimplifiedReActAgent:
                 final_answer = response.choices[0].message.content
                 
                 if self.verbose:
-                    logger.info(f"✅ Final Answer: {final_answer[:200]}...")
+                    logger.info(f"✅ Final Answer: {(final_answer or '')[:200]}...")
                 
                 # Add final response to history
                 self.conversation_history.append(
-                    ConversationMessage(role="assistant", content=final_answer or "")
+                    ConversationMessage(role="assistant", content=final_answer or "",
+                                        reasoning_content=getattr(response.choices[0].message, 'reasoning_content', None))
                 )
                 
                 return final_answer or "No response"
@@ -323,7 +365,8 @@ class SimplifiedReActAgent:
                 final_answer = response.choices[0].message.content
                 if final_answer:
                     self.conversation_history.append(
-                        ConversationMessage(role="assistant", content=final_answer)
+                        ConversationMessage(role="assistant", content=final_answer,
+                                            reasoning_content=getattr(response.choices[0].message, 'reasoning_content', None))
                     )
                     return final_answer
                 break

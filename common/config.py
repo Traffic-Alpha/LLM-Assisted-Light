@@ -5,11 +5,13 @@
 @LastEditTime: 2026-06-12 23:05:29
 '''
 import os
+import json
 import yaml
+from copy import deepcopy
 
 from pathlib import Path
 from typing import Dict, Any, Optional
-from llm_tsc.logger import logger
+from common.logger import logger
 
 class Config:
     """
@@ -32,6 +34,7 @@ class Config:
         'OPENAI_API_BASE': 'https://api.openai.com/v1',
         'OPENAI_PROXY': None,
         'OPENAI_TEMPERATURE': 0.0,
+        'OPENAI_EXTRA_BODY': {},  # Provider-specific request options, e.g. thinking
         
         # ==================
         # Agent Settings
@@ -55,6 +58,7 @@ class Config:
         """
         self.config: Dict[str, Any] = {}
         self.yaml_path = None
+        config_requested = yaml_path is not None or 'YAML_CONFIG_PATH' in os.environ
         
         # Try to load from YAML first
         if yaml_path is None:
@@ -66,6 +70,8 @@ class Config:
         if yaml_path and os.path.exists(yaml_path):
             self._load_yaml(yaml_path)
             self.yaml_path = yaml_path
+        elif config_requested:
+            raise FileNotFoundError(f"Config file not found: {yaml_path}")
         
         # Override with environment variables
         self._load_env()
@@ -73,17 +79,21 @@ class Config:
         # Fill in defaults for missing values
         for key, default_val in self.DEFAULTS.items():
             if key not in self.config:
-                self.config[key] = default_val
+                self.config[key] = deepcopy(default_val)
+        if not isinstance(self.config['OPENAI_EXTRA_BODY'], dict):
+            raise ValueError('OPENAI_EXTRA_BODY must be a YAML mapping or JSON object')
     
     def _load_yaml(self, yaml_path: str) -> None:
         """Load configuration from YAML file"""
         try:
             with open(yaml_path, 'r', encoding='utf-8') as f:
-                yaml_config = yaml.safe_load(f) or {}
-                self.config.update(yaml_config)
-                logger.info(f"✓ Loaded config from {yaml_path}")
-        except Exception as e:
-            logger.warning(f"Failed to load YAML config from {yaml_path}: {e}")
+                yaml_config = yaml.safe_load(f)
+        except yaml.YAMLError:
+            raise ValueError(f"Invalid YAML config: {yaml_path}") from None
+        if not isinstance(yaml_config, dict):
+            raise ValueError(f"Config must contain a YAML mapping: {yaml_path}")
+        self.config.update(yaml_config)
+        logger.info(f"✓ Loaded config from {yaml_path}")
     
     def _load_env(self) -> None:
         """Load configuration from environment variables"""
@@ -94,6 +104,7 @@ class Config:
             'OPENAI_API_BASE': 'OPENAI_API_BASE',
             'OPENAI_PROXY': 'OPENAI_PROXY',
             'OPENAI_TEMPERATURE': ('OPENAI_TEMPERATURE', float),
+            'OPENAI_EXTRA_BODY': ('OPENAI_EXTRA_BODY', json.loads),
             
             # Agent settings
             'MAX_ITERATIONS': ('MAX_ITERATIONS', int),
@@ -116,6 +127,8 @@ class Config:
                     try:
                         value = type_converter(value)
                     except (ValueError, TypeError):
+                        if config_key == 'OPENAI_EXTRA_BODY':
+                            raise ValueError('OPENAI_EXTRA_BODY must be a JSON object') from None
                         logger.warning(f"Failed to convert {env_key}={value}")
                         continue
                 self.config[config_key] = value

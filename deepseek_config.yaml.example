@@ -1,0 +1,13 @@
+# DeepSeek non-thinking; select with --config deepseek_config.yaml
+OPENAI_API_KEY: ""
+OPENAI_API_MODEL: "deepseek-flash"
+OPENAI_API_BASE: "https://api.deepseek.com/v1"
+OPENAI_PROXY: null
+OPENAI_TEMPERATURE: 0.0
+OPENAI_EXTRA_BODY:
+  thinking:
+    type: disabled
+
+MAX_ITERATIONS: 8
+LLM_VERBOSE: true
+TOTAL_SIMULATION_TIME: 500

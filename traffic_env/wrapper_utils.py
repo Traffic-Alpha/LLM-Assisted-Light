@@ -62,6 +62,8 @@ def convert_state_to_static_information(input_data) -> Dict[str, Dict[str, Any]]
             direction_text = "Left Turn"
         elif direction == "s":
             direction_text = "Through"
+        elif direction == "r":
+            direction_text = "Right Turn"
         else:
             continue
 

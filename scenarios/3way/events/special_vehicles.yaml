@@ -1,0 +1,12 @@
+# 3-way: special vehicles only. Times are seconds from simulation start.
+SPECIAL_VEHICLES:
+  - id: ambulance_00
+    vehicle_type: "ambulance"
+    depart_time: 20
+    route: ["E0", "-E2"]
+    priority: 1
+  - id: ambulance_01
+    vehicle_type: "ambulance"
+    depart_time: 220
+    route: ["E0", "-E2"]
+    priority: 1

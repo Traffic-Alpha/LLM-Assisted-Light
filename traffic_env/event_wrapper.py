@@ -62,6 +62,9 @@ class EnvironmentEventWrapper(gym.Wrapper):
         self.sim_time = self._get_sumo_time(default=0.0)
         self._clear_runtime_state()
         self._prepare_events()
+        register_callback = getattr(self.env, "set_simulation_step_callback", None)
+        if callable(register_callback):
+            register_callback(self._on_simulation_step)
         return state
 
     def step(self, action: Any) -> Any:
@@ -114,11 +117,20 @@ class EnvironmentEventWrapper(gym.Wrapper):
 
         if self.enable_accidents:
             for accident in self.event_config.accidents:
+                if accident.duration > 0 and sim_time >= accident.end_time:
+                    if accident.id in self.inserted_accidents and accident.id in self.conn.vehicle.getIDList():
+                        self.conn.vehicle.unsubscribe(accident.id)
+                        self.conn.vehicle.remove(accident.id)
+                    continue
                 if sim_time >= accident.depart_time:
                     self._insert_accident(accident)
 
         if self.enable_sensor_failures:
             self._update_sensor_failures(sim_time)
+
+    def _on_simulation_step(self) -> None:
+        self.sim_time = self._get_sumo_time(default=self.sim_time)
+        self._apply_events(self.sim_time)
 
     # ------------------------------------------------------------------
     # Accident / obstacle vehicles
@@ -307,6 +319,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
             for veh_id in self.conn.lane.getLastStepVehicleIDs(lane_id):
                 pos = float(self.conn.vehicle.getLanePosition(veh_id))
                 if abs(target_pos - pos) < 1.0:
+                    self.conn.vehicle.unsubscribe(veh_id)
                     self.conn.vehicle.remove(veh_id)
                     logger.info("Removed vehicle {} before inserting obstacle", veh_id)
         except Exception as exc:
@@ -379,14 +392,11 @@ class EnvironmentEventWrapper(gym.Wrapper):
             target = getattr(target, "env", None)
         return None
 
-    def _get_accident_affected_movements(self, edge_id: str) -> list[str]:
-        movement_ids = self._find_env_attr("movement_ids") or []
-        affected = []
-        for movement_id in movement_ids:
-            in_edge = str(movement_id).split("--")[0]
-            if in_edge == edge_id and not str(movement_id).endswith("--r"):
-                affected.append(str(movement_id))
-        return affected
+    def _get_accident_affected_movements(self, edge_id: str, lane_index: int) -> list[str]:
+        state = self._find_env_attr("current_tls_state") or {}
+        lane_id = f"{edge_id}_{lane_index}"
+        return [movement for movement, lanes in state.get("movement_lane_ids", {}).items()
+                if lane_id in lanes]
 
     def get_accident_details(self) -> list[Dict[str, Any]]:
         active_accidents = self.event_config.active_events(self.sim_time)["accidents"]
@@ -403,7 +413,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
                     "type": accident.type,
                     "inserted": accident.id in self.inserted_accidents,
                     "affected_movements": self._get_accident_affected_movements(
-                        accident.edge_id
+                        accident.edge_id, accident.lane_index
                     ),
                 }
             )
@@ -415,19 +425,60 @@ class EnvironmentEventWrapper(gym.Wrapper):
         if callable(base_method):
             base_situation = cast(Dict[str, Any], base_method())
         accident_details = self.get_accident_details()
+        blocked_lanes = {detail["lane_id"] for detail in accident_details if detail["inserted"]}
+        state = self._find_env_attr("current_tls_state") or {}
+        movement_impacts = {}
+        for movement, lanes in state.get("movement_lane_ids", {}).items():
+            closed = sorted(set(lanes) & blocked_lanes)
+            if closed:
+                available = sorted(set(lanes) - blocked_lanes)
+                movement_impacts[movement] = {
+                    "blocked_lanes": closed, "usable_lanes": available,
+                    "fully_blocked": not available,
+                }
+        emergency_vehicles = self.get_emergency_vehicles()
+        rescue_movements = set(base_situation.get("rescue_movements") or [])
+        rescue_movements.update(vehicle["movement_id"] for vehicle in emergency_vehicles if vehicle["movement_id"])
+        movement_access = dict(base_situation.get("movement_access", {}))
+        for movement, impact in movement_impacts.items():
+            if impact["fully_blocked"]:
+                movement_access[movement] = False
         return {
             **base_situation,
+            "rescue_movements": sorted(rescue_movements) or None,
+            "emergency_vehicles": emergency_vehicles,
+            "movement_access": movement_access,
             "configured_events": self.event_config.summary(),
             "active_events": self.get_active_events(),
             "accident_details": accident_details,
-            "blocked_movements": sorted(
-                {
-                    movement
-                    for detail in accident_details
-                    for movement in detail["affected_movements"]
-                }
-            ),
+            "blocked_lanes": sorted(blocked_lanes),
+            "movement_impacts": movement_impacts,
+            "incident_affected_movements": sorted(movement_impacts),
+            "blocked_movements": sorted(movement for movement, impact in movement_impacts.items()
+                                        if impact["fully_blocked"]),
         }
+
+    def get_emergency_vehicles(self) -> list[Dict[str, Any]]:
+        configured = {vehicle.id: vehicle for vehicle in self.event_config.special_vehicles}
+        vehicles = self.env.get_emergency_vehicles(vehicle_ids=set(configured))
+        state = self._find_env_attr("current_tls_state") or {}
+        blocked_lanes = {detail["lane_id"] for detail in self.get_accident_details() if detail["inserted"]}
+        for vehicle in vehicles:
+            event = configured.get(vehicle["id"])
+            vehicle["priority"] = event.priority if event else 1
+            lanes = state.get("movement_lane_ids", {}).get(vehicle["movement_id"], [])
+            vehicle["movement_fully_blocked"] = bool(lanes) and set(lanes).issubset(blocked_lanes)
+            vehicle["eligible_phases"] = [] if vehicle["movement_fully_blocked"] else list(vehicle["serving_phases"])
+        return vehicles
+
+    def get_movement_details(self, movement_id: str) -> Dict[str, Any]:
+        details = self.env.get_movement_details(movement_id)
+        situation = self.get_junction_situation()
+        closed = set(situation["blocked_lanes"])
+        for lane in details["lanes"]:
+            lane["incident_blocked"] = lane["lane_id"] in closed
+        details["fully_blocked"] = all(lane["incident_blocked"] for lane in details["lanes"])
+        return details
 
 
 # ----------------------------------------------------------------------

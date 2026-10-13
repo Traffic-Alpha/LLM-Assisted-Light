@@ -1,0 +1,28 @@
+# 4-way: special vehicles + accidents. Times are seconds from simulation start.
+SPECIAL_VEHICLES:
+  - id: ambulance_00
+    vehicle_type: "ambulance"
+    depart_time: 20
+    route: ["E0", "-E2"]
+    priority: 1
+  - id: ambulance_01
+    vehicle_type: "ambulance"
+    depart_time: 220
+    route: ["E0", "-E2"]
+    priority: 1
+
+ACCIDENTS:
+  - id: accident_01
+    depart_time: 150
+    edge_id: "-E1"
+    lane_index: 1
+    position: 137.0
+    type: "parked_car"
+    duration: 50
+  - id: accident_02
+    depart_time: 250
+    edge_id: "E0"
+    lane_index: 1
+    position: 118.0
+    type: "barrier"
+    duration: 50
