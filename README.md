@@ -2,7 +2,7 @@
  * @Author: WANG Maonan
  * @Date: 2023-09-15 16:46:26
  * @Description: LA-Light README
- * @LastEditTime: 2026-09-18 21:03:25
+ * @LastEditTime: 2026-10-13 14:30:23
 -->
 # 🚦 LLM-Assisted Light (LA-Light)
 
@@ -14,7 +14,8 @@
 Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios](https://arxiv.org/abs/2403.08337).
 
 ## 📢 Latest News
-- **[May 2026]** **Introducing [OmniTraffic Benchmark](https://huggingface.co/datasets/CROHuang/OmniTraffic_Benchmark) and [Omnitraffic Dataset](https://huggingface.co/datasets/CROHuang/Omnitraffic_Dataset)**: A large-scale benchmark and dataset for evaluating multi-view spatiotemporal reasoning and BEV perception in multimodal large language models (MLLMs). The full dataset contains over 8M generated VQA samples, with a 3.2K human-validated benchmark for reliable evaluation.
+- **[September 2026]** 🎉 **OmniTraffic accepted at NeurIPS 2026 ED Track!** Congratulations! Our controllable generation pipeline and benchmark for **spatio-temporal traffic reasoning** evaluates multimodal large language models (MLLMs) on lane topology, multi-view geometry, temporal dynamics, and signal-phase semantics. [Paper Link](https://arxiv.org/pdf/2606.15749)
+- **[May 2026]** **Introducing [OmniTraffic Benchmark](https://huggingface.co/datasets/CROHuang/OmniTraffic_Benchmark) and [OmniTraffic Dataset](https://huggingface.co/datasets/CROHuang/Omnitraffic_Dataset)**: Built around **12 real-world intersections reconstructed into editable 3D traffic environments** and surveillance footage from two countries, OmniTraffic supports controlled and natural-condition evaluation across three task levels: scene perception, multi-view and temporal reasoning, and decision support. It provides **8M generated VQA samples** and a **3K human-verified test set**, with configurable camera views, traffic demands, signal phases, visual conditions, and rare events. Fine-tuning on simulated OmniTraffic data also improves performance on real-world traffic scenes.
 - **[June 2026]** 🔧 **Codebase refresh**: dynamic special events (accidents, special vehicles, sensor failures) are now loaded from a YAML config (`--event-config`) instead of being hard-coded; the LLM agent no longer depends on LangChain (lightweight OpenAI-based ReAct); and static intersection info (layout, phase structure, available actions) is injected into the prompt once per episode, simplifying tool calls to dynamic state only.
 - **[September 2025]** 🎉 **VLMLight accepted at NeurIPS 2025!** Congratulations! Our VLM-based traffic signal control paper has been accepted at NeurIPS 2025. [Paper Link](https://proceedings.neurips.cc/paper_files/paper/2025/hash/3849b5861dcaeaf4758eef0979a98cc6-Abstract-Conference.html)
 - **[July 2025]** **Introducing [VLMLight](https://github.com/Traffic-Alpha/VLMLight)**: Our next-generation framework featuring **image-based traffic signal control** using Vision-Language Models (VLMs) for enhanced scene understanding and real-time decision-making.
