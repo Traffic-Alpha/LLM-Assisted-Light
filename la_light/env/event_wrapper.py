@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Optional, Set, cast
 
-import gymnasium as gym
-from traffic_env.logger import logger
+from loguru import logger
 
-from traffic_env.event_config import (
+from la_light.env.base_tsc_wrapper import BaseTSCEnvWrapper
+from la_light.env.event_config import (
     AccidentEvent,
     EventConfig,
     EventConfigManager,
@@ -20,18 +20,18 @@ from traffic_env.event_config import (
 )
 
 
-class EnvironmentEventWrapper(gym.Wrapper):
+class EnvironmentEventWrapper:
     """Apply configured dynamic events to a 2D TSC environment."""
 
     def __init__(
         self,
-        env: gym.Env,
+        env: BaseTSCEnvWrapper,
         event_config: Optional[EventConfig] = None,
         enable_accidents: bool = True,
         enable_special_vehicles: bool = True,
         enable_sensor_failures: bool = True,
     ) -> None:
-        super().__init__(env)
+        self.env = env
         self.event_config = event_config or EventConfig()
         self.enable_accidents = enable_accidents
         self.enable_special_vehicles = enable_special_vehicles
@@ -43,12 +43,13 @@ class EnvironmentEventWrapper(gym.Wrapper):
         self.inserted_accidents: Set[str] = set()
         self.scheduled_special_vehicles: Set[str] = set()
         self.active_sensor_failures: Set[str] = set()
+        self.removed_for_accident: list[Dict[str, Any]] = []
 
         if self.event_config.has_events():
             logger.info(f"Event wrapper enabled: {self.event_config.summary()}")
 
     # ------------------------------------------------------------------
-    # Gym lifecycle
+    # Simulation lifecycle
     # ------------------------------------------------------------------
 
     def reset(
@@ -62,6 +63,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
         self.sim_time = self._get_sumo_time(default=0.0)
         self._clear_runtime_state()
         self._prepare_events()
+        self.unwrapped.set_pending_events_callback(self.has_pending_events)
         register_callback = getattr(self.env, "set_simulation_step_callback", None)
         if callable(register_callback):
             register_callback(self._on_simulation_step)
@@ -71,8 +73,8 @@ class EnvironmentEventWrapper(gym.Wrapper):
         self.sim_time = self._get_sumo_time(default=self.sim_time)
         self._apply_events(self.sim_time)
 
-        result = cast(Any, self.env).step(action)
-        info = self._extract_info(result)
+        result = self.env.step(action)
+        info = result[-1]
         if "step_time" in info:
             self.sim_time = float(info["step_time"])
         else:
@@ -81,6 +83,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
         return result
 
     def close(self) -> None:
+        self.unwrapped.episode_status["removed_for_accident"] = list(self.removed_for_accident)
         cast(Any, self.env).close()
 
     def __getattr__(self, name: str) -> Any:
@@ -97,6 +100,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
         self.inserted_accidents.clear()
         self.scheduled_special_vehicles.clear()
         self.active_sensor_failures.clear()
+        self.removed_for_accident.clear()
 
     def _prepare_events(self) -> None:
         if self.conn is None:
@@ -131,6 +135,20 @@ class EnvironmentEventWrapper(gym.Wrapper):
     def _on_simulation_step(self) -> None:
         self.sim_time = self._get_sumo_time(default=self.sim_time)
         self._apply_events(self.sim_time)
+
+    def has_pending_events(self) -> bool:
+        """Keep future/finite-duration events alive through gaps in vehicle demand."""
+        sim_time = self._get_sumo_time(default=self.sim_time)
+        timed_events = []
+        if self.enable_accidents:
+            if any(event.duration <= 0 and event.id not in self.inserted_accidents
+                   for event in self.event_config.accidents):
+                return True
+            timed_events.extend(self.event_config.accidents)
+        if self.enable_sensor_failures:
+            timed_events.extend(self.event_config.sensor_failures)
+        return any(sim_time < event.end_time if event.duration > 0 else sim_time <= event.depart_time
+                   for event in timed_events)
 
     # ------------------------------------------------------------------
     # Accident / obstacle vehicles
@@ -321,6 +339,10 @@ class EnvironmentEventWrapper(gym.Wrapper):
                 if abs(target_pos - pos) < 1.0:
                     self.conn.vehicle.unsubscribe(veh_id)
                     self.conn.vehicle.remove(veh_id)
+                    self.removed_for_accident.append({
+                        "sim_time": self.sim_time, "vehicle_id": veh_id,
+                        "lane_id": lane_id, "position": pos,
+                    })
                     logger.info("Removed vehicle {} before inserting obstacle", veh_id)
         except Exception as exc:
             logger.debug(f"Could not clear lane {lane_id}: {exc}")
@@ -363,13 +385,6 @@ class EnvironmentEventWrapper(gym.Wrapper):
     # ------------------------------------------------------------------
     # Reporting / LLM-facing helpers
     # ------------------------------------------------------------------
-
-    def _extract_info(self, step_result: Any) -> Dict[str, Any]:
-        if isinstance(step_result, tuple) and len(step_result) >= 5:
-            return step_result[4] or {}
-        if isinstance(step_result, tuple) and len(step_result) >= 3:
-            return step_result[-1] or {}
-        return {}
 
     def get_active_events(self) -> Dict[str, Any]:
         active = self.event_config.active_events(self.sim_time)
@@ -486,7 +501,7 @@ class EnvironmentEventWrapper(gym.Wrapper):
 # ----------------------------------------------------------------------
 
 def create_event_wrapper(
-    env: gym.Env,
+    env: BaseTSCEnvWrapper,
     env_name: str,
     event_config_name: str,
     enable_accidents: bool = True,

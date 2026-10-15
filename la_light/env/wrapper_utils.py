@@ -7,13 +7,6 @@
 from typing import Dict, Any
 
 
-def find_index(lst, element):
-    try:
-        return lst.index(element)
-    except ValueError:
-        return None
-
-
 def convert_state_to_static_information(input_data) -> Dict[str, Dict[str, Any]]:
     """将 state 输出为路网的静态信息
 

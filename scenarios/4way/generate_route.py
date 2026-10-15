@@ -32,7 +32,7 @@ generate_route(
         '-E3__-E2': [0.8, 0.8, 0.5, 0.8, 0.5, 0.8],
     },
     veh_type={
-        'ego': {'color':'26, 188, 156', 'length':4.5, 'probability':0.3},
+        'passenger': {'color':'26, 188, 156', 'speed':17, 'length':4.5, 'probability':0.3},
         'background': {'color':'155, 89, 182', 'speed':15, 'length':4.5, 'probability':0.7},
     },
     walk_flow_per_minute={

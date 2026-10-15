@@ -24,7 +24,7 @@ def add_simulation_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--event-config", required=True, help="Event YAML path")
     parser.add_argument("--tls-id", default="J1")
     parser.add_argument("--num-seconds", type=positive_int, default=None,
-                        help="Simulation duration (default: TOTAL_SIMULATION_TIME)")
+                        help="Optional simulation time limit; default: run until traffic and events finish")
     parser.add_argument("--trip-info", default=None, help="Tripinfo XML output path")
     parser.add_argument("--decision-log", default=None, help="Decision JSONL output path")
     parser.add_argument("--gui", action="store_true", help="Run SUMO with GUI")
@@ -56,11 +56,10 @@ def append_decision_log(log_path: str | None, record: dict[str, Any]) -> None:
             file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def build_env(args, num_seconds: int, method: str, *, delta_time: int = 5):
-    from traffic_env.base_tsc_wrapper import BaseTSCEnvWrapper
-    from traffic_env.event_wrapper import create_event_wrapper
-    from traffic_env.llm_wrapper import LLMTSCEnvWrapper
-    from traffic_env.tsc_env import TrafficSignalEnv
+def build_env(args, num_seconds: int | None, method: str, *, delta_time: int = 5):
+    from la_light.env.base_tsc_wrapper import BaseTSCEnvWrapper
+    from la_light.env.event_wrapper import create_event_wrapper
+    from la_light.env.tsc_env import TrafficSignalEnv
 
     scenario_dir = PROJECT_ROOT / "scenarios" / args.scenario
     net_file = scenario_dir / "env" / f"{args.scenario}.net.xml"
@@ -80,6 +79,5 @@ def build_env(args, num_seconds: int, method: str, *, delta_time: int = 5):
         num_seconds=num_seconds, tls_id=args.tls_id,
         tls_action_type="choose_next_phase", use_gui=args.gui, delta_time=delta_time,
     )
-    wrapper_cls = LLMTSCEnvWrapper if method == "llm_tsc" else BaseTSCEnvWrapper
-    wrapped = wrapper_cls(env, tls_id=args.tls_id, phase_num=phase_num)
+    wrapped = BaseTSCEnvWrapper(env, tls_id=args.tls_id, phase_num=phase_num)
     return create_event_wrapper(wrapped, args.scenario, args.event_config)

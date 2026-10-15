@@ -10,4 +10,4 @@ OPENAI_EXTRA_BODY:
 
 MAX_ITERATIONS: 8
 LLM_VERBOSE: true
-TOTAL_SIMULATION_TIME: 500
+TOTAL_SIMULATION_TIME: null  # Run until all traffic clears; optionally set a time limit.

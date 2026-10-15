@@ -144,6 +144,8 @@ celerybeat.pid
 .env
 .venv
 env/
+!la_light/env/
+!la_light/env/*.py
 !scenarios/**/env/
 !scenarios/**/env/**
 venv/

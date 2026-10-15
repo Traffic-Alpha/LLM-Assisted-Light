@@ -20,7 +20,7 @@ LLM_VERBOSE: true           # 是否输出详细日志
 # ==========================================
 # Simulation Parameters
 # ==========================================
-TOTAL_SIMULATION_TIME: 500  # 仿真总时长 (秒)
+TOTAL_SIMULATION_TIME: null  # 默认运行至车辆清空；设为秒数可限制最长运行时间
 
 # ==========================================
 # 注意事项
@@ -29,4 +29,4 @@ TOTAL_SIMULATION_TIME: 500  # 仿真总时长 (秒)
 # 2. TOTAL_SIMULATION_TIME 可动态调整，无需修改 Python 代码
 # 3. 特殊车辆、事故、道路限速和传感器故障从 scenarios/<env>/events/*.yaml 加载
 # 4. --event-config scenarios/3way/events/special_vehicles_accident.yaml 选择事件配置
-# 5. --config deepseek_config.yaml 选择模型配置；支持项见 common/config.py
+# 5. --config deepseek_config.yaml 选择模型配置；支持项见 la_light/config.py

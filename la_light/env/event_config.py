@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 import yaml
-from traffic_env.logger import logger
+from loguru import logger
 
 
 def _as_list(value: Any) -> List[Dict[str, Any]]:
@@ -178,7 +178,7 @@ class EventConfig:
 
 
 class EventConfigManager:
-    CONFIG_DIR = Path(__file__).resolve().parent.parent / "scenarios"
+    CONFIG_DIR = Path(__file__).resolve().parents[2] / "scenarios"
 
     @classmethod
     def resolve_config_path(cls, env_name: str, config_name: str = "default") -> Path:

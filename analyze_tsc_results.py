@@ -111,7 +111,7 @@ def main() -> None:
 
     obstacle_ids = set()
     if args.event_config:
-        from traffic_env.event_config import EventConfig
+        from la_light.env.event_config import EventConfig
         obstacle_ids = {event.id for event in EventConfig(args.event_config).accidents}
 
     output = {}

@@ -11,7 +11,7 @@ from copy import deepcopy
 
 from pathlib import Path
 from typing import Dict, Any, Optional
-from common.logger import logger
+from loguru import logger
 
 class Config:
     """
@@ -45,7 +45,7 @@ class Config:
         # ==================
         # Simulation Parameters
         # ==================
-        'TOTAL_SIMULATION_TIME': 500,  # Total seconds
+        'TOTAL_SIMULATION_TIME': None,  # Optional time limit; otherwise drain all traffic.
     }
     
     def __init__(self, yaml_path: Optional[str] = None):

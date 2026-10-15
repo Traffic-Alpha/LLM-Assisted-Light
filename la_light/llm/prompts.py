@@ -29,8 +29,9 @@ Make the decision in this order:
    If all observed demand is zero and no emergency needs service, keep the current
    phase. Do not rotate through empty-demand phases just for fairness.
 5. Use inspect_movement for unresolved lane demand, get_traffic_history for longer
-   trends. Query event tools only for events present in the snapshot. You choose
-   the final phase, including whether to depart from the expert's advice.
+   trends. All tools are available at every decision. Choose queries yourself,
+   including to verify uncertain or unreported events. You choose the final phase,
+   including whether to depart from the expert's advice.
 
 Check that your chosen phase actually serves the movements used to justify it;
 use static phase membership and the expert's recommended_movements. Available
