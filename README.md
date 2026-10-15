@@ -14,6 +14,7 @@
 Official implementation of [LLM-Assisted Light: Augmenting Traffic Signal Control with Large Language Model in Complex Urban Scenarios](https://arxiv.org/abs/2403.08337).
 
 ## 📢 Latest News
+- **[October 2026]** 🔧 **Code refactor**: Consolidated code under `la_light/`, split the LLM agent by function, and unified the simulation environment across controllers.
 - **[September 2026]** 🎉 **OmniTraffic accepted at NeurIPS 2026 ED Track!** Congratulations! Our **spatio-temporal traffic dataset** incorporates road network information to assess the traffic understanding and reasoning capabilities of multimodal large language models (MLLMs). [Paper Link](https://arxiv.org/pdf/2606.15749)
 - **[May 2026]** **Introducing [OmniTraffic Benchmark](https://huggingface.co/datasets/CROHuang/OmniTraffic_Benchmark) and [OmniTraffic Dataset](https://huggingface.co/datasets/CROHuang/Omnitraffic_Dataset)**: Covering **12 reconstructed real-world intersections**, OmniTraffic provides **8M generated VQA samples** for training MLLMs and **3K human-verified test samples** for evaluating traffic scene understanding, spatio-temporal reasoning, and decision support capabilities.
 - **[June 2026]** 🔧 **Codebase refresh**: dynamic special events (accidents, special vehicles, sensor failures) are now loaded from a YAML config (`--event-config`) instead of being hard-coded; the LLM agent no longer depends on LangChain (lightweight OpenAI-based ReAct); and static intersection info (layout, phase structure, available actions) is injected into the prompt once per episode, simplifying tool calls to dynamic state only.
@@ -56,16 +57,19 @@ Events are declared in YAML and injected via `--event-config`; see [Event-Aware 
 
 ## 🚀 Getting Started with LA-Light
 
-The current lightweight validation code keeps the LA-Light tool-calling idea and runs on single-intersection TSHub/SUMO scenarios with configurable traffic events.
+LA-Light runs on 3-way and 4-way intersections in TSHub/SUMO. The LLM acts as a traffic officer, combining MP expert advice with live observations and traffic tools to handle special events.
 
 ### 🛠️ Installation
 
 Install [TransSimHub](https://github.com/Traffic-Alpha/TransSimHub):
 
 ```bash
+git clone https://github.com/Traffic-Alpha/LLM-Assisted-Light.git
 git clone https://github.com/Traffic-Alpha/TransSimHub.git
 cd TransSimHub
 pip install -e ".[all]"
+cd ../LLM-Assisted-Light
+pip install openai httpx pyyaml loguru
 ```
 
 Copy and edit the local configuration file:
@@ -74,7 +78,7 @@ Copy and edit the local configuration file:
 cp config.yaml.example config.yaml
 ```
 
-Set `OPENAI_API_KEY` in `config.yaml` or via environment variable. The local `config.yaml` is ignored by git.
+Set the API key, model, and endpoint in `config.yaml`, or select another model configuration with `--config <model.yaml>`. A DeepSeek non-thinking example is provided in `deepseek_config.yaml.example`.
 
 ### 🤖 LLM-Assisted Traffic Signal Control
 
@@ -83,13 +87,12 @@ Run the LLM-based traffic signal controller:
 ```bash
 python run_llm_tsc.py \
   --scenario 4way \
-  --phase-num 4 \
-  --event-config scenarios/4way/events/accident_set1.yaml \
+  --event-config scenarios/4way/events/special_vehicles_accident.yaml \
   --decision-log /tmp/llm_decision.jsonl \
-  --raw-response-log /tmp/llm_raw.jsonl
+  --episode-summary /tmp/llm_episode.json
 ```
 
-The current controller uses the LLM agent for every traffic-signal decision step. It queries tools for intersection layout, signal phases, current occupancy, traditional max-pressure recommendation, emergency vehicles, accident details, blocked movements, and sensor failures. `--decision-log` stores structured decision records. `--raw-response-log` stores raw LLM outputs separately for debugging.
+The agent receives intersection context, live observations, and MP expert advice. It chooses which traffic tools to query and whether to follow or adjust the recommendation. The logs capture decisions, tool calls, and latency.
 
 ### 📊 Max-Pressure Baseline
 
@@ -98,48 +101,27 @@ Run the max-pressure baseline on the same scenario and event configuration:
 ```bash
 python run_maxpressure.py \
   --scenario 4way \
-  --phase-num 4 \
-  --event-config scenarios/4way/events/accident_set1.yaml \
+  --event-config scenarios/4way/events/special_vehicles_accident.yaml \
   --decision-log /tmp/maxpressure_decision.jsonl
 ```
 
-The baseline uses the environment's `get_traditional_decision()` recommendation, so it is aligned with the traditional-decision tool seen by the LLM agent.
+MP follows the same expert recommendation supplied to LA-Light. Both controllers share the TSHub/SUMO environment in `la_light/env/`; the modular agent is in `la_light/llm/`. Episodes run until traffic and pending events finish, with teleport disabled by default.
 
 ### 🚑 Event-Aware Evaluation
 
-The [complex urban scenarios](#-complex-urban-scenarios) above are declared per scenario in:
-
-```text
-scenarios/<scenario>/events/*.yaml
-```
-
-and injected at runtime via `--event-config`. The supported sections are `ACCIDENTS`, `SPECIAL_VEHICLES`, and `SENSOR_FAILURES`.
+Both road networks provide special vehicles, special vehicles with accidents, and special vehicles with sensor failures through YAML files under `scenarios/<scenario>/events/`. For 3-way experiments, use `--scenario 3way` and the matching event file. Signal phases are inferred from the road network.
 
 Compare tripinfo results, including both regular traffic and special-vehicle efficiency:
 
 ```bash
 python analyze_tsc_results.py \
   llm:4way_llm_tsc.tripinfo.xml \
-  maxpressure:4way_maxpressure.tripinfo.xml
+  maxpressure:4way_maxpressure.tripinfo.xml \
+  --event-config scenarios/4way/events/special_vehicles_accident.yaml \
+  --output /tmp/traffic_comparison.json
 ```
 
-The report separates:
-
-- `regular`: ordinary traffic efficiency
-- `special`: ambulance/rescue/police/fire vehicle completion rate, waiting time, and time loss
-- `all`: aggregate metrics
-
-See [docs/event_config.md](docs/event_config.md) for event configuration details.
-
-### Notes on the Current Lightweight Code
-
-The original project included RL training/evaluation and legacy launchers. The current runnable validation path is centered on:
-
-- `run_llm_tsc.py`: event-aware LLM controller with local tool-calling agent
-- `run_maxpressure.py`: aligned max-pressure baseline
-- `analyze_tsc_results.py`: regular/special vehicle metric comparison
-
-RL training and trained models are not included in this lightweight validation path. For single-intersection RL-based TSC code, see [single-tsc-baselines](https://github.com/Traffic-Alpha/single-tsc-baselines).
+The report compares travel time, waiting time, and completion counts for ordinary and special vehicles separately. Travel and waiting averages cover completed trips; `--event-config` excludes accident obstacles. See [event configuration details](docs/event_config.md) for custom scenarios.
 
 ## 🎥 LA-Light Joint Decision-Making Demo
 
